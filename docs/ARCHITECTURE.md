@@ -4,18 +4,19 @@
 
 ## 1. 技術組成
 
-| 層 | 選擇 | 備註 |
-|---|---|---|
-| 框架 | Next.js（App Router）+ TypeScript（strict） | `output: "standalone"`，可放進任何容器平台 |
-| 資料庫 | PostgreSQL | 開發時用 Docker Compose 啟動 |
-| ORM | Drizzle ORM + drizzle-kit | 資料表定義在 `src/server/db/schema/`；migrations 提交在 `drizzle/` |
-| 登入 | Auth.js + Drizzle Adapter | Email 登入連結、Google、Apple；session 存在資料庫 |
-| 樣式 | CSS Modules + CSS 變數（預設） | 變數取自 `prototype/styles.css` 的 A3 數值，放在 `src/styles/tokens.css` |
-| 驗證 | Zod | 所有 API 輸入、表單、環境變數都要驗證 |
-| 測試 | Vitest（單元測試）＋ Playwright（端對端測試） | |
-| 套件管理 | pnpm（預設） | |
-| CI | GitHub Actions：lint、typecheck、test、build | |
-| 部署 | Docker image；上線前再選 GCP、AWS 或自架 | 開發期間避免使用特定平台的 API |
+| 層       | 選擇                                                                                             | 備註                                                                                    |
+| -------- | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |
+| 框架     | Next.js 16（App Router）+ TypeScript（strict）                                                   | `output: "standalone"`；啟用 Cache Components（`use cache`、`cacheTag`）；`typedRoutes` |
+| 資料庫   | PostgreSQL                                                                                       | 開發時用 Docker Compose 啟動                                                            |
+| ORM      | Drizzle ORM + drizzle-kit                                                                        | 資料表定義在 `src/server/db/schema/`；migrations 提交在 `drizzle/`                      |
+| 登入     | Auth.js + Drizzle Adapter                                                                        | Email 登入連結、Google、Apple；session 存在資料庫                                       |
+| 樣式     | CSS Modules + CSS 變數（預設）                                                                   | 變數取自 `prototype/styles.css` 的 A3 數值，放在 `src/styles/tokens.css`                |
+| 驗證     | Zod                                                                                              | 所有 API 輸入、表單、環境變數都要驗證                                                   |
+| 測試     | Vitest（單元測試）＋ Playwright（端對端測試）                                                    |                                                                                         |
+| 套件管理 | pnpm（版本鎖定在 `package.json` 的 `packageManager`）                                            |                                                                                         |
+| 寄信     | 開發用 Mailpit（docker compose）；正式環境的服務商待定                                           | 登入連結信件在 http://localhost:8025 查看                                               |
+| CI       | GitHub Actions：`pnpm check`、e2e（PostgreSQL + Mailpit + standalone build）、Docker image build |                                                                                         |
+| 部署     | Docker image；上線前再選 GCP、AWS 或自架                                                         | 開發期間避免使用特定平台的 API                                                          |
 
 ## 2. 資料夾結構
 
@@ -35,7 +36,7 @@
 │  │  ├─ auth.ts         Auth.js 設定
 │  │  └─ services/       商業邏輯：chapters、quota、library、works、import…
 │  ├─ components/
-│  ├─ i18n/              zh-Hant.json（預留 zh-Hans、en、ja）
+│  ├─ i18n/              messages/zh-Hant.ts + t()（預留 zh-Hans、en、ja，須符合同一型別）
 │  └─ styles/            tokens.css（A3 設計變數）
 ├─ tests/                e2e/
 ├─ Dockerfile
@@ -89,10 +90,10 @@ AuditLog        actorId, action, entity, entityId, diff(json), createdAt
 
 ### 4.2 公開與受保護內容
 
-| 頁面 | 渲染方式 | 搜尋引擎收錄 |
-|---|---|---|
-| 最新更新、搜尋、作品頁、目錄 | 伺服器端產生，可快取 | 收錄；加上 sitemap、metadata、Open Graph |
-| 章節閱讀頁 | 每次請求動態產生，先檢查額度 | 頁面加 `noindex`；內文不寫進可快取的 HTML |
+| 頁面                         | 渲染方式                     | 搜尋引擎收錄                              |
+| ---------------------------- | ---------------------------- | ----------------------------------------- |
+| 最新更新、搜尋、作品頁、目錄 | 伺服器端產生，可快取         | 收錄；加上 sitemap、metadata、Open Graph  |
+| 章節閱讀頁                   | 每次請求動態產生，先檢查額度 | 頁面加 `noindex`；內文不寫進可快取的 HTML |
 
 ### 4.3 閱讀與額度
 
@@ -131,27 +132,28 @@ AuditLog        actorId, action, entity, entityId, diff(json), createdAt
 
 ## 6. 多語系
 
-- 介面文字一律從 `src/i18n/zh-Hant.json` 讀取，元件裡不直接寫中文字串。
-- 預留 `zh-Hans`、`en`、`ja` 的檔案位置。網址先不加語系前綴，`<html lang="zh-Hant">`。
+- 介面文字一律用 `t("key")` 從 `src/i18n/messages/zh-Hant.ts` 讀取，元件裡不直接寫中文字串。
+- 新增語系時，在 `src/i18n/messages/` 加上 `zh-Hans.ts`、`en.ts`、`ja.ts`，型別必須符合 `Messages`（少翻任何一個 key，typecheck 就會失敗），再加進 `locales`。網址先不加語系前綴，`<html lang="zh-Hant">`。
 - 作品內容本身只有繁中，資料表不需要語系欄位。
 
 ## 7. 開發階段
 
-| 階段 | 內容 | 完成條件 |
-|---|---|---|
-| 0 基礎建設 | Next.js 專案、Docker Compose、Drizzle、Auth.js 骨架、lint、測試、CI、`.env.example` | `pnpm check` 全部通過；`docker compose up` 能啟動 |
-| 1 內容與後台 | 資料表、後台作品與章節管理、批次匯入、排程 | 能匯入一部虛構作品並排程發布 |
-| 2 讀者公開頁 | 最新、搜尋、作品頁、目錄、閱讀器（先不檢查額度） | 對照 A3 原型，桌面與手機版面一致 |
-| 3 帳號與同步 | 三種登入、偏好設定、書架、閱讀進度、閱讀紀錄 | 兩台裝置之間能同步 |
-| 4 額度與防爬 | 訪客辨識（Cookie＋IP＋瀏覽器特徵）、額度視窗、頻率限制、後台額度設定 | 額度邏輯有單元測試覆蓋各種邊界情況 |
-| 5 上線準備 | 法務頁面、SEO、錯誤監控、備份、選定主機並部署 | 上線檢查清單全部完成 |
+| 階段          | 內容                                                                                | 完成條件                                                             |
+| ------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 0 基礎建設 ✅ | Next.js 專案、Docker Compose、Drizzle、Auth.js 骨架、lint、測試、CI、`.env.example` | `pnpm check` 全部通過；`docker compose up` 能啟動（2026-10-01 完成） |
+| 1 內容與後台  | 資料表、後台作品與章節管理、批次匯入、排程                                          | 能匯入一部虛構作品並排程發布                                         |
+| 2 讀者公開頁  | 最新、搜尋、作品頁、目錄、閱讀器（先不檢查額度）                                    | 對照 A3 原型，桌面與手機版面一致                                     |
+| 3 帳號與同步  | 三種登入、偏好設定、書架、閱讀進度、閱讀紀錄                                        | 兩台裝置之間能同步                                                   |
+| 4 額度與防爬  | 訪客辨識（Cookie＋IP＋瀏覽器特徵）、額度視窗、頻率限制、後台額度設定                | 額度邏輯有單元測試覆蓋各種邊界情況                                   |
+| 5 上線準備    | 法務頁面、SEO、錯誤監控、備份、選定主機並部署                                       | 上線檢查清單全部完成                                                 |
 
 第二階段（看流量再決定）：評論與檢舉審核、會員與金流、廣告、App。
 
-## 8. 給 AI Agent 與協作者的規範（階段 0 寫入 AGENTS.md）
+## 8. 給 AI Agent 與協作者的規範（已寫入 AGENTS.md）
 
 - 每個任務對應一個分支，任務完成時更新 `docs/handoffs/CURRENT.md`。
-- `pnpm check` 依序跑 lint、typecheck、test，提交前必須通過。
+- `pnpm check` 依序跑 lint、format:check、typecheck、test，提交前必須通過。動到頁面或 API 時另跑 `pnpm test:e2e`。
+- 寫 Next.js 程式前先讀 `node_modules/next/dist/docs/` 的對應文件（這版 API 與一般認知不同，例如 `proxy.ts` 取代 middleware、request API 一律 async、沒有 `next lint`）。
 - services 必須有單元測試；額度、權限、發布可見性屬於高風險邏輯，邊界情況都要測到。
 - 資料表變更一律先改 `src/server/db/schema/`，再用 `pnpm db:generate` 產生 migration，不直接改資料庫。
 - 新增任何套件前，先在 `docs/DECISIONS.md` 記錄理由。

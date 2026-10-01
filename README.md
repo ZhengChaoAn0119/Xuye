@@ -2,31 +2,35 @@
 
 以線上連載小說為核心的繁體中文閱讀平台。
 
-- `prototype/`：互動原型（純 HTML／CSS／JS），A3「現代書庫」為主要方案。
-- 正式版：Next.js + TypeScript，規劃中，將放在 repo 根目錄。
+- 正式版（repo 根目錄）：Next.js 16 + TypeScript + PostgreSQL（Drizzle）+ Auth.js，以 Docker 開發。
+- `prototype/`：A3「現代書庫」互動原型（純 HTML／CSS／JS），作為視覺參考。
 
-## 原型啟動
+## 正式版：本機開發
 
-直接以瀏覽器開啟 `prototype/index.html`，或在 `prototype/` 資料夾啟動任一靜態檔案伺服器。
+需要 Node.js 24、pnpm 10、Docker。
 
-## 原型可點擊路由
+```bash
+cp .env.example .env          # 再填入 AUTH_SECRET（可用 pnpm dlx auth secret 產生）
+pnpm install
+docker compose up -d db mailpit
+pnpm db:migrate
+pnpm dev                      # http://localhost:3000
+```
 
-- `#/compare`：三個方案及點擊流程圖
-- `#/latest`：最新更新；卡片／欄位檢視切換
-- `#/search`：單一搜尋框及篩選入口
-- `#/work/ember-city`：作品資訊、章節與評論
-- `#/reader/ember-city/126`：沉浸閱讀器
-- `#/library`：三種書架閱讀狀態
-- `#/history`：跨裝置閱讀紀錄
-- `#/discussion/ember-city`：五星評價、防劇透與互動
-- `#/profile`：24 小時額度與內容偏好
-- `#/plans`：四級會員方案
+- 登入信件（Email 登入連結）會被 Mailpit 攔下，在 http://localhost:8025 查看。
+- 提交前執行 `pnpm check`；動到頁面或 API 時另外執行 `pnpm test:e2e`。
+- 完整模擬正式環境：`docker compose up --build`。
 
-所有名稱、作品、作者、封面與評論均為虛構示意。
+其他指令與開發規範見 `AGENTS.md`。
+
+## 原型
+
+直接以瀏覽器開啟 `prototype/index.html`。可點擊的路由有 `#/latest`、`#/search`、`#/work/ember-city`、`#/reader/ember-city/126`、`#/library`、`#/history`、`#/discussion/ember-city`、`#/profile`。所有作品、作者、評論均為虛構。
 
 ## 專案文件
 
-- `AGENTS.md`：人與 AI Agent 共用的工作規則
-- `docs/PROJECT_CONTEXT.md`：產品、架構與驗證方式
+- `AGENTS.md`：人與 AI Agent 共用的工作規則與指令
+- `docs/ARCHITECTURE.md`：正式版架構、資料模型、開發階段
 - `docs/DECISIONS.md`：長期有效的決策
+- `docs/PROJECT_CONTEXT.md`：產品背景
 - `docs/handoffs/CURRENT.md`：目前進度與交接

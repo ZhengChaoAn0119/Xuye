@@ -1,0 +1,62 @@
+# Local stack. Daily development: `docker compose up -d db mailpit` + `pnpm dev`.
+# Full production-like run: `docker compose up --build` (needs AUTH_SECRET in .env).
+name: xuye
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: xuye
+      POSTGRES_PASSWORD: xuye
+      POSTGRES_DB: xuye
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U xuye -d xuye"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  # Catches every email in development; inbox at http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    environment:
+      DATABASE_URL: postgres://xuye:xuye@db:5432/xuye
+    depends_on:
+      db:
+        condition: service_healthy
+
+  app:
+    build:
+      context: .
+      target: runner
+    environment:
+      DATABASE_URL: postgres://xuye:xuye@db:5432/xuye
+      AUTH_SECRET: ${AUTH_SECRET:?set AUTH_SECRET in .env (pnpm dlx auth secret)}
+      AUTH_URL: http://localhost:3000
+      EMAIL_SERVER: smtp://mailpit:1025
+      EMAIL_FROM: 續頁 <no-reply@xuye.localhost>
+      AUTH_GOOGLE_ID: ${AUTH_GOOGLE_ID:-}
+      AUTH_GOOGLE_SECRET: ${AUTH_GOOGLE_SECRET:-}
+      AUTH_APPLE_ID: ${AUTH_APPLE_ID:-}
+      AUTH_APPLE_SECRET: ${AUTH_APPLE_SECRET:-}
+    ports:
+      - "3000:3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      mailpit:
+        condition: service_started
+
+volumes:
+  db-data:

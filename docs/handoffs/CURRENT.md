@@ -4,43 +4,48 @@ Updated: 2026-10-01 (Asia/Taipei)
 
 ## Current state
 
-- 2026-10-01: The production build was decided (Next.js + TypeScript + PostgreSQL + Drizzle + Auth.js, developed on Docker with hosting chosen before launch; see `docs/DECISIONS.md` → Production build). The architecture plan is in `docs/ARCHITECTURE.md`. There is no Figma step; the A3 prototype is the visual reference.
-- The prototype moved to `prototype/`, and file paths in the sections below refer to files inside it.
-- Next step: phase 0 (scaffold) from `docs/ARCHITECTURE.md` §7. Still to confirm: email provider, Apple Developer account, object storage, and monitoring/analytics tools (`docs/ARCHITECTURE.md` §9).
+- **Phase 0 (scaffold) is complete.** The production app lives at the repository root; the A3 prototype is in `prototype/` as the visual reference.
+- Stack: Next.js 16.3 (App Router, Cache Components, typed routes, standalone output), TypeScript strict, PostgreSQL 17 + Drizzle, Auth.js v5 beta (database sessions; Email/Google/Apple enabled per env), Zod, Vitest, Playwright, Prettier, and Docker Compose (db, mailpit, migrate, app).
+- Plan and phases: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md` → Production build.
 
-- The interactive static prototype is implemented in `index.html`, `app.js`, and `styles.css`.
-- A3 is confirmed as the primary design. A2 was reviewed and rejected structurally; its palette is kept as an A3 color candidate. Membership details are deferred. See `docs/DECISIONS.md`.
-- Prototype controls on A3 routes are now functional, with per-browser persistence in `localStorage` (`xuye:*` keys).
+## What phase 0 delivered
 
-## Latest material change
+- `src/env.ts`: zod-validated server env, parsed lazily so builds need no secrets; provider credentials are validated in pairs.
+- `src/server/db/`: Drizzle client (lazy, pooled) and the auth schema (`users` with `role`/`tier` enums, `accounts`, `sessions`, `verification_tokens`). First migration: `drizzle/0000_*.sql`.
+- `src/server/auth.ts`, `src/server/auth-providers.ts`, and `src/app/api/auth/[...nextauth]/route.ts`: Auth.js with lazy config and the Drizzle adapter. The session exposes `user.id` and `user.role`.
+- `src/server/services/health.ts` and `src/app/api/v1/health/route.ts`: the first service + versioned API pattern (200 ok / 503 degraded).
+- `src/i18n/`: typed `t()` over `messages/zh-Hant.ts`; future locales must match the `Messages` type.
+- `src/styles/tokens.css`: A3 tokens, plus the alternate palette from A2 under `:root[data-palette="alt"]`.
+- `src/app/`: a placeholder home page in A3 style (static and prerendered).
+- Tooling:
+  - `pnpm check` (lint, format, typecheck, unit tests).
+  - `pnpm test:e2e`.
+  - `pnpm start` runs the standalone server.
+  - `Dockerfile` (deps / migrator / builder / runner).
+  - `docker-compose.yml`.
+  - `.github/workflows/ci.yml`.
+  - `.gitattributes` (LF), `.editorconfig`, `.nvmrc`.
+- `AGENTS.md`: production commands and conventions. The Next.js-managed agent block is at the end of the file; leave it as is.
 
-Wired up previously presentational controls (A3):
+## Verification (2026-10-01, Windows 11, Node 24.14, Docker 29.4)
 
-- `#/latest`: 全部／連載中／已完結 filters (work with grid and list views).
-- `#/search`: status filters, genre filters (toggle), empty state with reset.
-- `#/work/:id`: save/unsave to bookshelf, chapter sort order, "show all chapters", genre tag links to search, continue-reading uses saved progress, last-read chapter highlighted.
-- `#/library`: count and list reflect saved works; empty state.
-- `#/history`: real history from reader visits; manage mode with per-item remove and clear-all (progress is kept).
-- `#/discussion/:id`: helpful / not-helpful votes, review menu (block user, report modal, delete own review), unblock, spoiler masks driven by reading progress with reveal, write-review modal (stars, chapter scope limited to read chapters, requires at least one read chapter).
-- `#/reader/:id/:n`: records progress and history, bookmark toggle, table-of-contents modal scrolled to the current chapter, previous-chapter disabled at chapter 1, chapter titles per work, reader theme/size persisted.
-- `#/profile`: tabs (帳號總覽／閱讀設定／內容偏好), reading defaults with preview, preference toggles; enabling sexual content requires a birthday + 18+ confirmation modal.
-- Header quota indicator links to profile; Escape closes modals.
-- Updated compare page and prototype bar wording for the A3-primary decision.
+- `pnpm check`: lint clean, Prettier clean, typecheck clean, 11 unit tests passing.
+- `pnpm build`: success; `/` is static, and the auth and health APIs are dynamic.
+- `pnpm test:e2e`: 8/8 passing (desktop + mobile), both against `next dev` and in CI mode against the standalone build. This includes a **real email magic-link sign-in**: the email arrives in Mailpit, the link creates a database session, and the role is `reader`.
+- `docker compose up --build` from an empty database volume: the migration applies, the app serves health 200, the home page and CSS load, and the providers endpoint responds. The app image is 298 MB.
+- GitHub Actions CI has **not run yet**, because nothing has been pushed.
 
-## Verification
+## Known notes
 
-- `node --check app.js` passed.
-- Headless Chrome (CDP) script exercised 48 interaction checks across all routes at 1366px and 390px. All passed, with no runtime errors and no horizontal overflow on mobile. Screenshots were inspected for the discussion menu, profile age modal, reader TOC, and work page.
+- A `url.parse()` deprecation warning comes from a dependency at runtime, not from project code.
+- `next-auth` v5 is still beta; see `docs/DECISIONS.md`.
+- The migration file has a generated name (`0000_fantastic_doctor_spectrum.sql`); later migrations can use `pnpm db:generate --name <name>`.
 
-## Known limitations
+## Next steps (phase 1: content and admin)
 
-- A2-only controls (hamburger, 最新更新／新作上架 tabs) are still presentational. Intentional: A2 is not being extended.
-- Login, payment, and plan selection remain illustrative toasts or modals.
-- Reader font choice, line height, and page width (listed in decisions) are not yet implemented; only size and background are.
-- Bookshelf state labels (有新章／已追到最新) are still static fixture data, not derived from progress.
+1. Content schema: `authors`, `works`, `tags`, `work_tags`, `chapters`, `chapter_contents`, `audit_logs` (`docs/ARCHITECTURE.md` §3), plus a `pg_trgm` migration for search.
+2. Services: work/chapter CRUD, publish visibility (`PUBLISHED`, or `SCHEDULED` with `publishAt <= now()`), and batch import with a preview step. Unit-test the visibility and chapter-splitting rules.
+3. Admin area under `src/app/admin/`, restricted to `role = admin`. Add a script or seed to promote a user to admin.
+4. A fictional seed work for development and e2e.
 
-## Suggested next steps
-
-1. Decide on the front-end framework for the production build (comparison discussed in chat on 2026-10-01; recommendation: Next.js + TypeScript).
-2. Optionally add the A2 palette as an A3 color variant for comparison.
-3. Implement the remaining reader settings (font, line height, page width).
+Still to confirm with the user: production email provider, Apple Developer account, object storage for covers, and monitoring/analytics tools.

@@ -1,0 +1,10 @@
+prototype/
+drizzle/
+pnpm-lock.yaml
+.next/
+playwright-report/
+test-results/
+next-env.d.ts
+# Contains a block managed by `next dev` that must stay byte-identical.
+AGENTS.md
+CLAUDE.md

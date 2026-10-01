@@ -1,0 +1,64 @@
+/*
+ * Design tokens. Values come from the A3 branch of prototype/styles.css (the
+ * rendered values, i.e. the later "market-aligned" overrides).
+ * Components use these variables only; no raw colors in component CSS.
+ */
+:root {
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-2: #eeeeeb;
+  --ink: #242322;
+  --muted: #74716e;
+  --line: #deded9;
+  --brand: #9b2335;
+  --brand-ink: #ffffff;
+  --accent: #9b2335;
+  --soft: #f4e9eb;
+  --star: #e29a21;
+  --medal: #d89d28;
+
+  --shadow-panel: 0 8px 24px rgba(22, 29, 45, 0.07);
+  --shadow-cover: 0 4px 12px rgba(15, 20, 30, 0.12);
+
+  --radius: 6px;
+  --radius-control: 3px;
+  --radius-pill: 99px;
+
+  --font-ui: Inter, "Noto Sans TC", "Microsoft JhengHei", "PingFang TC", sans-serif;
+  --font-reading: "Noto Serif TC", "PMingLiU", "Songti TC", serif;
+
+  --content: 1180px;
+  --gutter: 22px;
+  --control-height: 40px;
+
+  /* Reader surfaces */
+  --reader-sepia-bg: #f5f0e5;
+  --reader-sepia-ink: #2c2823;
+  --reader-white-bg: #ffffff;
+  --reader-white-ink: #252525;
+  --reader-dark-bg: #14171d;
+  --reader-dark-ink: #d9dbe0;
+  --reader-size: 19px;
+  --reader-line-height: 2.05;
+  --reader-width: 720px;
+}
+
+/* Alternate A3 palette derived from the A2 study: colors only, A3 layout unchanged. */
+:root[data-palette="alt"] {
+  --bg: #f5f6f8;
+  --surface: #ffffff;
+  --surface-2: #e9ebef;
+  --ink: #17191d;
+  --muted: #686e78;
+  --line: #d8dbe2;
+  --brand: #5d73b6;
+  --brand-ink: #ffffff;
+  --accent: #e84f76;
+  --soft: #edf0fa;
+}
+
+@media (max-width: 640px) {
+  :root {
+    --gutter: 16px;
+  }
+}

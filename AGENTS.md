@@ -29,8 +29,40 @@ Use the project-memory documents only when relevant:
 - Render affected desktop and mobile routes after layout or responsive CSS changes.
 - Verify the relevant navigation path end to end, not only the edited screen.
 
+## Production app (repository root)
+
+Setup: `cp .env.example .env` (set `AUTH_SECRET` with `pnpm dlx auth secret`), then `pnpm install`, `docker compose up -d db mailpit`, `pnpm db:migrate`, `pnpm dev`. Sign-in emails appear in Mailpit at http://localhost:8025.
+
+| Command | Purpose |
+|---|---|
+| `pnpm check` | lint, format check, typecheck, and unit tests. Must pass before every commit. |
+| `pnpm test:e2e` | Playwright (desktop + mobile). Needs db + mailpit running and migrated. Run it when pages, APIs, or auth change. |
+| `pnpm db:generate` | Create a migration after editing `src/server/db/schema/`. Commit the generated `drizzle/` files. Never edit the database by hand. |
+| `pnpm db:migrate` | Apply migrations. |
+| `pnpm build` then `pnpm start` | Production standalone server, the same artifact as the Docker image. |
+| `docker compose up --build` | Full stack: db, mailpit, migrate, app on :3000. |
+
+Conventions:
+
+- Before writing Next.js code, read the matching guide in `node_modules/next/dist/docs/`. This is Next.js 16 with Cache Components: `proxy.ts` instead of middleware, async request APIs, `use cache` + `cacheLife`/`cacheTag` for caching, and no `next lint`.
+- Business logic goes in `src/server/services/`, takes its dependencies as arguments, and has unit tests. Pages, Server Actions, and `src/app/api/v1/` routes only validate input, check auth, and call services.
+- Server-only modules import `"server-only"`. Keep pure logic in separate files so Vitest can import it.
+- Environment variables are declared and validated only in `src/env.ts`, with `.env.example` kept in sync. Read them through `serverEnv()`, never `process.env` directly.
+- UI copy goes through `t()` from `src/i18n`, never hard-coded strings in components. Styles use the CSS variables in `src/styles/tokens.css`, never raw colors.
+- Record any new dependency in `docs/DECISIONS.md` with the reason.
+
 ## Handoff
 
 After material work, update `docs/handoffs/CURRENT.md` with what changed, affected files and routes, verification performed, unresolved questions and next steps, and the branch or commit when available.
 
 Record durable product decisions in `docs/DECISIONS.md`, not only in the handoff.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->
