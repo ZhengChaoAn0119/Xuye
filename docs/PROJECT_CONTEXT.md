@@ -7,7 +7,7 @@
 The repository contains:
 
 - `prototype/`: an interactive front-end prototype built with plain HTML, CSS, and JavaScript, with no build step or package dependency. It is the visual and interaction reference.
-- The production build (Next.js + TypeScript), which is planned and will live at the repository root. Its stack and constraints are recorded in `docs/DECISIONS.md` under "Production build".
+- The production app (Next.js 16 + TypeScript + PostgreSQL), at the repository root. Phases 0–2 are done: scaffold, content and admin, and the public reader site. The stack and constraints are in `docs/DECISIONS.md` under "Production build", the structure and phases in `docs/ARCHITECTURE.md`, and current progress in `docs/handoffs/CURRENT.md`.
 
 ## Prototype files
 

@@ -5,7 +5,7 @@ Update this file only for decisions that should survive tools, computers, branch
 ## Production build (decided 2026-10-01)
 
 - Framework: Next.js (App Router) + TypeScript, at the repository root. The prototype moves to `prototype/` and stays as reference.
-- Database: PostgreSQL. Authentication: self-hosted Auth.js with Email, Google, and Apple, with sessions stored in PostgreSQL.
+- Database: PostgreSQL. Authentication: self-hosted Auth.js with Email and Google (Apple is deferred until after launch; see below), with sessions stored in PostgreSQL.
 - SEO split: work pages, chapter directories, latest, and search are public and indexable. Chapter body text is served only through a server-side check (quota + anti-scraping) and is not statically rendered into public HTML.
 - MVP scope: reader, work page, latest, search, accounts, bookshelf, history, cross-device sync, and quota. Reviews, membership purchase, and ads come in phase 2.
 - All early users are Free tier. Membership purchase and payment are added only once traffic can support monetization; keep schema room for tiers but build no payment flow.
@@ -77,7 +77,7 @@ Update this file only for decisions that should survive tools, computers, branch
 
 - Visitors can read with a small device/browser/network-associated quota.
 - Registered Free accounts receive bookshelf, comments, history, and cross-device synchronization.
-- Login options are Email, Google, and Apple.
+- Login options are Email, Google, and Apple. Apple is added after the web launch.
 - Plans are monthly: Free plus three paid capacity levels. Exact names, prices, and quota values remain adjustable.
 - Membership plan details (names, prices, quota values, payment) are deferred as of 2026-10-01; the plans page stays illustrative.
 - Paid plans are ad-free and may include avatar, name color, and an optional badge.

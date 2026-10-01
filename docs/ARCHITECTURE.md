@@ -1,6 +1,6 @@
 # 正式版架構規劃
 
-狀態：草案（2026-10-01）。已確定的技術決策以 `docs/DECISIONS.md` 的「Production build」為準；本文件說明怎麼實作。標示「預設」的項目尚可調整，改動時同步更新本文件。
+狀態：進行中，階段 0–2 已完成（2026-10-01）。已確定的技術決策以 `docs/DECISIONS.md` 的「Production build」為準；本文件說明怎麼實作。標示「預設」的項目尚可調整，改動時同步更新本文件。
 
 ## 1. 技術組成
 
@@ -9,7 +9,7 @@
 | 框架     | Next.js 16（App Router）+ TypeScript（strict）                                                   | `output: "standalone"`；啟用 Cache Components（`use cache`、`cacheTag`）；`typedRoutes` |
 | 資料庫   | PostgreSQL                                                                                       | 開發時用 Docker Compose 啟動                                                            |
 | ORM      | Drizzle ORM + drizzle-kit                                                                        | 資料表定義在 `src/server/db/schema/`；migrations 提交在 `drizzle/`                      |
-| 登入     | Auth.js + Drizzle Adapter                                                                        | Email 登入連結、Google、Apple；session 存在資料庫                                       |
+| 登入     | Auth.js + Drizzle Adapter                                                                        | Email 登入連結、Google（Apple 延後到上線後）；session 存在資料庫                        |
 | 樣式     | CSS Modules + CSS 變數（預設）                                                                   | 變數取自 `prototype/styles.css` 的 A3 數值，放在 `src/styles/tokens.css`                |
 | 驗證     | Zod                                                                                              | 所有 API 輸入、表單、環境變數都要驗證                                                   |
 | 測試     | Vitest（單元測試）＋ Playwright（端對端測試）                                                    |                                                                                         |
@@ -22,26 +22,32 @@
 
 ```
 /
-├─ prototype/            A3 原型（視覺參考，不再當作產品開發）
-├─ docs/                 決策、架構、交接文件
-├─ drizzle/              drizzle-kit 產生的 migrations（提交進 repo）
-├─ scripts/              seed（開發用虛構資料）等工具腳本
+├─ prototype/              A3 原型（視覺參考，不再當作產品開發）
+├─ docs/                   決策、架構、交接文件
+├─ drizzle/                drizzle-kit 產生的 migrations（提交進 repo）
+├─ scripts/                CLI：import-epubs、promote-admin、e2e-prepare、start-standalone
 ├─ src/
 │  ├─ app/
-│  │  ├─ (site)/         讀者端：最新、搜尋、作品、閱讀器、書架、紀錄、我的
-│  │  ├─ admin/          後台（限 ADMIN 角色）
-│  │  └─ api/v1/         公開 API（之後給 App 共用）
+│  │  ├─ (site)/           讀者端（有頁首）：/、/search、/works/[id]（之後加書架、紀錄、我的）
+│  │  ├─ (reader)/         沉浸式閱讀器：/works/[id]/chapters/[position]
+│  │  ├─ admin/            後台（限 admin 角色）
+│  │  └─ api/              auth/（Auth.js）、admin/import、v1/（公開 API，之後給 App 共用）
 │  ├─ server/
-│  │  ├─ db/             Drizzle client（index.ts）與資料表定義（schema/）
-│  │  ├─ auth.ts         Auth.js 設定
-│  │  └─ services/       商業邏輯：chapters、quota、library、works、import…
-│  ├─ components/
-│  ├─ i18n/              messages/zh-Hant.ts + t()（預留 zh-Hans、en、ja，須符合同一型別）
-│  └─ styles/            tokens.css（A3 設計變數）
-├─ tests/                e2e/
-├─ Dockerfile
-├─ docker-compose.yml    app + postgres
-└─ .env.example          所有環境變數（不含真實值）
+│  │  ├─ db/               client.ts（工廠）、index.ts（server-only）、schema/
+│  │  ├─ content/          純邏輯：EPUB 解析、分類、匯入計畫、可見性、表單 schema
+│  │  ├─ services/         商業邏輯（傳入 db）：catalog、content-import、admin-content、audit、health
+│  │  ├─ catalog.ts        公開資料的快取層（use cache＋cacheTag）
+│  │  ├─ authz.ts          requireAdmin / adminOrResponse
+│  │  ├─ auth.ts           Auth.js 設定
+│  │  └─ cache-tags.ts     快取標籤
+│  ├─ components/          頁首、封面、作品列表、章節目錄、閱讀器控制
+│  ├─ lib/                 格式化等共用工具
+│  ├─ i18n/                messages/zh-Hant.ts + t()（預留 zh-Hans、en、ja，須符合同一型別）
+│  └─ styles/              tokens.css（A3 設計變數）
+├─ tests/e2e/              Playwright（獨立的 <db>_e2e 資料庫）
+├─ Dockerfile              deps / migrator / builder / runner
+├─ docker-compose.yml      db、mailpit、migrate、app
+└─ .env.example            所有環境變數（不含真實值）
 ```
 
 **API 分層原則**：商業邏輯只寫在 `src/server/services/`。頁面、Server Actions、`api/v1` 路由都只負責驗證輸入、檢查身分，再呼叫 service。這樣將來 App 打 `api/v1` 時，拿到的是同一套邏輯。

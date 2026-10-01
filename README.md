@@ -21,7 +21,17 @@ pnpm dev                      # http://localhost:3000
 - 提交前執行 `pnpm check`；動到頁面或 API 時另外執行 `pnpm test:e2e`。
 - 完整模擬正式環境：`docker compose up --build`。
 
-其他指令與開發規範見 `AGENTS.md`。
+### 匯入書籍與使用後台
+
+```bash
+pnpm content:import <EPUB 資料夾>            # 預覽（不寫入）
+pnpm content:import <EPUB 資料夾> --apply    # 寫入；可重複執行，只補新章、更新有變的章
+pnpm user:promote <你的 Email>               # 先在 /api/auth/signin 登入一次，再設為管理員
+```
+
+後台在 http://localhost:3000/admin；讀者端是 http://localhost:3000。書籍內容不會進 Git。
+
+其他指令與開發規範見 `AGENTS.md`；目前進度見 `docs/handoffs/CURRENT.md`。
 
 ## 原型
 
