@@ -28,6 +28,14 @@ describe("parseServerEnv", () => {
     expect(() => parseServerEnv({ ...base, AUTH_SECRET: "short" })).toThrow(/AUTH_SECRET/);
   });
 
+  it("requires AUTH_URL in production", () => {
+    expect(() => parseServerEnv({ ...base, NODE_ENV: "production" })).toThrow(/AUTH_URL/);
+    expect(
+      parseServerEnv({ ...base, NODE_ENV: "production", AUTH_URL: "https://xuye.example" })
+        .AUTH_URL,
+    ).toBe("https://xuye.example");
+  });
+
   it("requires provider credentials in pairs", () => {
     expect(() => parseServerEnv({ ...base, AUTH_GOOGLE_ID: "id" })).toThrow(/AUTH_GOOGLE_SECRET/);
     expect(() => parseServerEnv({ ...base, EMAIL_FROM: "a@b.c" })).toThrow(/EMAIL_SERVER/);

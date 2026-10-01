@@ -34,6 +34,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# book content is imported from outside the repo and must never be committed
+*.epub
+
 # playwright
 /playwright-report/
 /test-results/

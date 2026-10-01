@@ -43,6 +43,7 @@ jobs:
     env:
       DATABASE_URL: postgres://xuye:xuye@localhost:5432/xuye
       AUTH_SECRET: ci-only-secret-not-used-anywhere-else-0123456789
+      AUTH_URL: http://localhost:3100
       EMAIL_SERVER: smtp://localhost:1025
       EMAIL_FROM: 續頁 <no-reply@xuye.localhost>
     steps:
@@ -54,7 +55,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm exec playwright install --with-deps chromium
-      - run: pnpm db:migrate
+      # The E2E database (xuye_e2e) is created and migrated by `pnpm e2e:prepare`.
       - run: pnpm build
       # `pnpm start` runs the standalone server, the same artifact the Docker image ships.
       - run: pnpm test:e2e

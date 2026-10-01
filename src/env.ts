@@ -21,6 +21,14 @@ const serverEnvSchema = z
     EMAIL_FROM: optionalString,
   })
   .superRefine((env, ctx) => {
+    // Without it, sign-in links and redirects use the bind address (e.g. 0.0.0.0).
+    if (env.NODE_ENV === "production" && !env.AUTH_URL) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["AUTH_URL"],
+        message: "正式環境必須設定網站對外網址，例如 https://xuye.example",
+      });
+    }
     const pairs = [
       ["AUTH_GOOGLE_ID", "AUTH_GOOGLE_SECRET"],
       ["AUTH_APPLE_ID", "AUTH_APPLE_SECRET"],

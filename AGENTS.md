@@ -36,10 +36,12 @@ Setup: `cp .env.example .env` (set `AUTH_SECRET` with `pnpm dlx auth secret`), t
 | Command | Purpose |
 |---|---|
 | `pnpm check` | lint, format check, typecheck, and unit tests. Must pass before every commit. |
-| `pnpm test:e2e` | Playwright (desktop + mobile). Needs db + mailpit running and migrated. Run it when pages, APIs, or auth change. |
+| `pnpm test:e2e` | Playwright (desktop + mobile). Needs db + mailpit running. Uses its own `<db>_e2e` database (created and migrated automatically), so development data is never touched. Run it when pages, APIs, or auth change. |
 | `pnpm db:generate` | Create a migration after editing `src/server/db/schema/`. Commit the generated `drizzle/` files. Never edit the database by hand. |
 | `pnpm db:migrate` | Apply migrations. |
-| `pnpm build` then `pnpm start` | Production standalone server, the same artifact as the Docker image. |
+| `pnpm content:import <dir>` | Dry-run EPUB import; add `--apply` to write. Re-runs are safe (append and update only). |
+| `pnpm user:promote <email>` | Make an existing account (sign in once first) an admin for `/admin`. |
+| `pnpm build` then `pnpm start` | Production standalone server, the same artifact as the Docker image. Needs `AUTH_URL`. |
 | `docker compose up --build` | Full stack: db, mailpit, migrate, app on :3000. |
 
 Conventions:
@@ -48,7 +50,11 @@ Conventions:
 - Business logic goes in `src/server/services/`, takes its dependencies as arguments, and has unit tests. Pages, Server Actions, and `src/app/api/v1/` routes only validate input, check auth, and call services.
 - Server-only modules import `"server-only"`. Keep pure logic in separate files so Vitest can import it.
 - Environment variables are declared and validated only in `src/env.ts`, with `.env.example` kept in sync. Read them through `serverEnv()`, never `process.env` directly.
-- UI copy goes through `t()` from `src/i18n`, never hard-coded strings in components. Styles use the CSS variables in `src/styles/tokens.css`, never raw colors.
+- Reader-facing copy goes through `t()` from `src/i18n`, never hard-coded strings. The admin back office (`/admin`) may inline Traditional Chinese. Styles use the CSS variables in `src/styles/tokens.css`, never raw colors.
+- Every admin page, Server Action, and admin API checks authorization itself (`requireAdmin()` / `adminOrResponse()`); a layout check does not protect actions. Admin pages put their session read and data inside `<Suspense>` (see the existing pages).
+- With Cache Components, a `200` status does not prove a streamed page rendered: e2e tests must assert on content.
+- Raw `sql\`\`` fragments do not map parameter types: pass dates as ISO strings with an explicit cast, or use column helpers (`gt`, `lte`, …).
+- Never commit book content. Import EPUBs from outside the repo; tests use `buildTestEpub()` fixtures.
 - Record any new dependency in `docs/DECISIONS.md` with the reason.
 
 ## Handoff

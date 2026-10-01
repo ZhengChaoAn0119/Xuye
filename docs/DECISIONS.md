@@ -21,6 +21,28 @@ Update this file only for decisions that should survive tools, computers, branch
 - Hosting: develop on Docker (app + PostgreSQL via Docker Compose) so the build is portable. The deployment platform (GCP, AWS, or self-hosted) is chosen before launch; avoid platform-specific APIs until then. Use `output: "standalone"`.
 - Visitor quota identification: signed cookie + IP + a lightweight browser-trait hash (language, timezone, screen, and similar), combined. When a visitor's quota is used up, show only the recovery time. There is no login wall and no prompt to register. Registered users are counted per account with their own (higher) quota. Rate limiting and bot protection (for example Cloudflare) are layered on top. The trait hash must be disclosed in the privacy policy, and IP-level limits must tolerate shared IPs (schools, offices, mobile carriers).
 - Design source: no Figma. The A3 prototype in `prototype/` is the visual reference. Production design tokens are CSS variables taken from `prototype/styles.css` (A3 values). The A2 palette stays available as an alternate A3 color set.
+- Deferred until after the web version launches: Apple sign-in, the Apple Developer account, and all app work. The Apple provider code stays in place but is disabled while its env vars are empty. (2026-10-01)
+- `AUTH_URL` is required when `NODE_ENV=production`, so sign-in links never point at a bind address such as 0.0.0.0.
+
+### Content model and import (decided 2026-10-01, phase 1)
+
+- The chapter number is the 1-based `position` in reading order, used in URLs. Headings are stored verbatim and never parsed for numbers, because source formats vary (第N章, 001, 01., 前言…).
+- Chapter `kind` is `chapter` (story, including 番外 extras) or `note` (author announcements: 上架感言, 請假條, …). Notes appear in the directory, labelled, and are never charged reader quota.
+- Chapter `status` is `draft`, `published`, or `hidden`, plus `publish_at`. "Scheduled" means published with a future `publish_at`; visibility is checked at read time, so no background job is needed.
+- Import heuristics (`src/server/content/classify.ts`) mark notes and hide placeholder chapters ("本章暫不支持網頁閱讀"). Admins can change both. Re-imports never overwrite kind or status.
+- Works are matched across imports by normalized title (`source_key`). A re-import appends new positions, updates chapters whose text or title changed, and only reports chapters missing from the file; nothing is deleted.
+- Imported chapter publish time comes from the source `chapter-records/*.json` `updatedAt` (Asia/Taipei when no offset is given), then the EPUB modified date, then the import time.
+- Bodies are stored as plain text, one paragraph per line, never HTML.
+- Book content is never committed: EPUBs are imported from outside the repository (`*.epub` is git-ignored). Tests use generated fixture EPUBs (`src/server/content/fixtures.ts`).
+- Covers: generated typographic covers by default (no image storage needed; none of the source EPUBs contain covers). `works.cover_key` is reserved for uploaded covers in S3-compatible object storage later.
+- Admin back office copy may be inline Traditional Chinese; reader-facing copy goes through `t()`.
+- Dependencies added in phase 1: `fflate` (EPUB unzip) and `tsx` (TypeScript CLI scripts with path aliases).
+- E2E tests use a separate database (`<db>_e2e`, created by `pnpm e2e:prepare`) and never touch development data.
+
+### Open (recommendations given 2026-10-01, awaiting confirmation)
+
+- Production email: an SMTP-compatible transactional provider on a dedicated subdomain with SPF/DKIM/DMARC. Recommended: Resend to start, or Amazon SES if hosting on AWS. Switching providers only changes `EMAIL_SERVER` and `EMAIL_FROM`.
+- Uploaded covers (later): S3-compatible object storage (GCS, S3, or Cloudflare R2; MinIO in development) behind a small storage interface, with resized WebP variants and CDN delivery.
 
 ## Product and content
 

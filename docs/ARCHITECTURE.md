@@ -55,15 +55,18 @@ Account / Session / VerificationToken   ← Auth.js 標準表
 UserPreference  userId, readerFontSize, readerTheme, readerFont, lineHeight,
                 pageWidth, showSexual, showViolence, showBadge
 
-Author          id, slug, name                       （無作者帳號，僅顯示用）
-Work            id, slug, title, authorId, synopsis, coverKey,
-                status(ONGOING|COMPLETED), hasSexual, hasViolence,
-                lastChapterAt, createdAt
-Tag             id, slug, name, kind(GENRE|TAG)      Work ⇄ Tag 多對多
-Chapter         id, workId, number, title, wordCount,
-                status(DRAFT|SCHEDULED|PUBLISHED|HIDDEN), publishAt, publishedAt
-                unique(workId, number)
-ChapterContent  chapterId, body                      內文另外存一張表，查目錄時不用載入內文
+── 階段 1 已實作（src/server/db/schema/content.ts）──
+authors         id, name(unique)                     無作者帳號，只用來顯示；書名／作者名有 trigram 索引
+works           id(數字，用於網址), title, authorId?, synopsis, status(ongoing|completed),
+                hasSexual, hasViolence, coverKey?(null＝自動產生文字封面), sourceKey(unique，匯入比對用)
+tags, work_tags 分類標籤，多對多
+chapters        id, workId, position(1 起算，等於公開章號), title(原樣保存), kind(chapter|note),
+                status(draft|published|hidden), publishAt?, wordCount, contentHash
+                unique(workId, position)；最新更新時間由查詢計算，不另存欄位
+chapter_contents chapterId, body                     純文字、一行一段；查目錄時不用載入內文
+audit_logs      actorId?, actorLabel, action, entityType, entityId, detail(jsonb)
+
+── 階段 3、4 再建 ──
 
 BookshelfItem   userId, workId, createdAt            PK(userId, workId)
 ReadingProgress userId, workId, chapterNumber, position, updatedAt,
@@ -74,19 +77,19 @@ VisitorIdentity id, cookieId, ipHash, traitHash, firstSeenAt   只存雜湊值�
 QuotaSetting    subject(VISITOR|FREE|…), chaptersPerWindow     後台可調整
 QuotaWindow     subjectKey, windowStart, used        視窗從第一次扣額度開始算 24 小時
 QuotaCharge     windowId, chapterId, chargedAt       unique(windowId, chapterId)：同一視窗內重讀同章不重複扣
-
-AuditLog        actorId, action, entity, entityId, diff(json), createdAt
 ```
 
 第二階段：Review、ReviewVote、Report、UserBlock、MembershipPlan、Subscription、Payment。首版資料表先保留 `tier` 欄位，可以不建這些表。
 
-規模：1,000+ 章 × 3,000–5,000 字，內文總量約 15 MB，PostgreSQL 處理這個量沒有壓力。搜尋使用 `pg_trgm` 對書名、作者、標籤做片段比對（內建全文搜尋不會斷中文詞）。
+規模（2026-10-01 實際匯入）：29 部、5,460 章、約 1,484 萬字，PostgreSQL 處理這個量沒有壓力，全部匯入約 6 秒。搜尋使用 `pg_trgm` 對書名、作者做片段比對（內建全文搜尋不會斷中文詞）。
 
 ## 4. 主要流程
 
 ### 4.1 排程發布
 
-章節對讀者是否可見，判斷條件是 `status = PUBLISHED`，或 `status = SCHEDULED 且 publishAt <= now()`。查詢時直接判斷，**不需要排程程式（cron）**。首頁「最新更新」依各作品最新一章的可見時間排序。公開頁面採定時重新產生（ISR），快取時間要短，或在發布時主動更新快取。
+章節對讀者可見的唯一條件：`status = published 且 publishAt <= now()`（`src/server/content/visibility.ts`，程式與 SQL 兩種寫法都有測試）。「排程」就是 published 加上未來的 publishAt，時間一到自然可見，**不需要排程程式（cron）**。首頁「最新更新」依各作品最新一章的可見時間排序。
+
+快取：公開頁用 `use cache` + `cacheTag`（標籤定義在 `src/server/cache-tags.ts`）。後台存檔用 `updateTag`，匯入 API 用 `revalidateTag(tag, "max")`。CLI 匯入和排程到點都不會觸發失效，所以公開頁還要設短的 `cacheLife`（建議幾分鐘）。
 
 ### 4.2 公開與受保護內容
 
@@ -117,18 +120,17 @@ AuditLog        actorId, action, entity, entityId, diff(json), createdAt
 - 作品標記 `hasSexual`、`hasViolence`，預設依使用者偏好隱藏。
 - 開啟性描繪內容前，必須填生日並確認年滿 18 歲；確認時間記在 `ageVerifiedAt`。
 
-## 5. 後台（首版）
+## 5. 後台
 
-- 作品：新增、編輯、封面上傳、分類標籤、連載狀態、內容分級。
-- 章節：編輯器、草稿、排程、發布、下架、排序。
-- 批次匯入：
-  - 方式一：上傳資料夾或 zip，每章一個 `.txt` 或 `.md` 檔。
-  - 方式二：上傳整份文字檔，依「第 N 章」的標題自動切章。
-  - 正式寫入前要先預覽，確認章號和標題正確。
-- 使用者：查詢、停權。
-- 額度設定：調整訪客和 Free 會員的額度數字。
-- 數據：每日閱讀章數、熱門作品、新註冊人數。
-- 操作紀錄：所有後台寫入動作都記錄在 AuditLog。
+已完成（階段 1，`/admin`，限 admin 角色；每個頁面、Action、API 都各自呼叫 `requireAdmin()`／`adminOrResponse()`）：
+
+- 總覽：作品數、章數、字數、公告、排程、草稿、隱藏，以及即將發布的章節清單。
+- 作品：列表（依最新發布排序）；編輯書名、作者、簡介、連載狀態、分類標籤、內容分級。
+- 章節：新增（接在最後一章之後）、編輯標題／類型／內文；發布方式有立即發布、排程（台北時間）、草稿、隱藏。
+- EPUB 匯入：後台上傳後先預覽（新增、更新、未變更的章數，判定為公告和隱藏的章節），確認後才寫入；也可用 `pnpm content:import` 大量匯入（預設只預覽，加 `--apply` 才寫入）。
+- 操作紀錄：所有寫入都記錄在 `audit_logs`。
+
+之後再做：封面上傳、使用者查詢與停權、額度設定（階段 4）、閱讀數據、章節排序調整、TXT 匯入。
 
 ## 6. 多語系
 
@@ -138,14 +140,14 @@ AuditLog        actorId, action, entity, entityId, diff(json), createdAt
 
 ## 7. 開發階段
 
-| 階段          | 內容                                                                                | 完成條件                                                             |
-| ------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 0 基礎建設 ✅ | Next.js 專案、Docker Compose、Drizzle、Auth.js 骨架、lint、測試、CI、`.env.example` | `pnpm check` 全部通過；`docker compose up` 能啟動（2026-10-01 完成） |
-| 1 內容與後台  | 資料表、後台作品與章節管理、批次匯入、排程                                          | 能匯入一部虛構作品並排程發布                                         |
-| 2 讀者公開頁  | 最新、搜尋、作品頁、目錄、閱讀器（先不檢查額度）                                    | 對照 A3 原型，桌面與手機版面一致                                     |
-| 3 帳號與同步  | 三種登入、偏好設定、書架、閱讀進度、閱讀紀錄                                        | 兩台裝置之間能同步                                                   |
-| 4 額度與防爬  | 訪客辨識（Cookie＋IP＋瀏覽器特徵）、額度視窗、頻率限制、後台額度設定                | 額度邏輯有單元測試覆蓋各種邊界情況                                   |
-| 5 上線準備    | 法務頁面、SEO、錯誤監控、備份、選定主機並部署                                       | 上線檢查清單全部完成                                                 |
+| 階段            | 內容                                                                                | 完成條件                                                             |
+| --------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 0 基礎建設 ✅   | Next.js 專案、Docker Compose、Drizzle、Auth.js 骨架、lint、測試、CI、`.env.example` | `pnpm check` 全部通過；`docker compose up` 能啟動（2026-10-01 完成） |
+| 1 內容與後台 ✅ | 資料表、後台作品與章節管理、EPUB 匯入、排程                                         | 全部 29 部真實書籍匯入；e2e 涵蓋匯入、編輯、排程（2026-10-01 完成）  |
+| 2 讀者公開頁    | 最新、搜尋、作品頁、目錄、閱讀器（先不檢查額度）、自動產生文字封面                  | 對照 A3 原型，桌面與手機版面一致                                     |
+| 3 帳號與同步    | Email 與 Google 登入（Apple 延後到上線後）、偏好設定、書架、閱讀進度、閱讀紀錄      | 兩台裝置之間能同步                                                   |
+| 4 額度與防爬    | 訪客辨識（Cookie＋IP＋瀏覽器特徵）、額度視窗、頻率限制、後台額度設定                | 額度邏輯有單元測試覆蓋各種邊界情況                                   |
+| 5 上線準備      | 法務頁面、SEO、錯誤監控、備份、選定主機並部署                                       | 上線檢查清單全部完成                                                 |
 
 第二階段（看流量再決定）：評論與檢舉審核、會員與金流、廣告、App。
 
@@ -161,7 +163,7 @@ AuditLog        actorId, action, entity, entityId, diff(json), createdAt
 
 ## 9. 待確認事項
 
-- Email 寄信服務（用來寄登入連結）：Resend、Amazon SES、SendGrid 等。
-- 需要申請 Apple Developer 帳號（Apple 登入用）。
-- 封面圖片的儲存位置（S3 相容的物件儲存）：等主機決定後再選。
+- 正式環境的寄信服務：建議 Resend（起步）或 Amazon SES（若主機選 AWS），使用專屬子網域並設定 SPF／DKIM／DMARC，等使用者確認。
+- 封面上傳（之後）：S3 相容物件儲存（GCS／S3／R2，開發用 MinIO），等主機決定後再選。目前一律使用自動產生的文字封面。
+- Apple 登入與 App：延後到正式版上線後（已決定）。
 - 錯誤監控與流量分析工具：要符合「不追蹤」原則。

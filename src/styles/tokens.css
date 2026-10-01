@@ -17,6 +17,14 @@
   --star: #e29a21;
   --medal: #d89d28;
 
+  /* Status colors (badges, notices) */
+  --ok-bg: #e3f1e6;
+  --ok-ink: #24663a;
+  --warn-bg: #fdf1d8;
+  --warn-ink: #7a5410;
+  --danger-bg: #f3e3e3;
+  --danger-ink: #8a2c2c;
+
   --shadow-panel: 0 8px 24px rgba(22, 29, 45, 0.07);
   --shadow-cover: 0 4px 12px rgba(15, 20, 30, 0.12);
 

@@ -16,14 +16,18 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "e2e:prepare": "tsx scripts/e2e-prepare.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
+    "content:import": "tsx scripts/import-epubs.ts",
+    "user:promote": "tsx scripts/promote-admin.ts",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
     "drizzle-orm": "^0.45.3",
+    "fflate": "^0.8.3",
     "next": "16.3.8",
     "next-auth": "5.0.0-beta.32",
     "nodemailer": "^8.0.11",
@@ -48,6 +52,7 @@
     "eslint-config-prettier": "^10.1.8",
     "jsdom": "^30.1.1",
     "prettier": "^3.9.9",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^5.0.3"
   },
