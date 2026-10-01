@@ -6,7 +6,7 @@ Updated: 2026-10-01 (Asia/Taipei)
 
 - **Phases 0, 1, and 2 are complete.** Readers can browse and read the full local library (29 works, 5,460 chapters) at http://localhost:3000 with `pnpm dev`.
 - Plan: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md`, including the new "Public reader site" section.
-- Local commits only: nothing has been pushed, so GitHub Actions CI has never run.
+- Pushed to `origin/main` on 2026-10-01. The first GitHub Actions run (#36880738989, commit `8292c11`) passed every job: "Lint, types, unit tests" (33 s), "Build and end-to-end tests" (84 s), and "Docker image builds" (72 s). Before pushing, the same three jobs were run locally from a clean clone, with no `.env`, and passed.
 
 ## Phase 2 delivered
 
