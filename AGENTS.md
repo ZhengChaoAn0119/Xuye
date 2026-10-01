@@ -7,12 +7,15 @@ Use the project-memory documents only when relevant:
 - Read `docs/PROJECT_CONTEXT.md` when a task needs product, architecture, route, or validation context.
 - Read `docs/DECISIONS.md` before changing product behavior, membership rules, navigation, content policy, or the A1/A2/A3 design directions.
 - Read `docs/handoffs/CURRENT.md` when resuming work from another tool, computer, branch, or chat.
+- Read `docs/ARCHITECTURE.md` before working on the production build (stack, folder layout, data model, quota flow, phases).
+- For visuals, the A3 prototype in `prototype/` is the reference design. There are no Figma files.
 
 ## Working rules
 
 - Treat repository files as the canonical project state. Chat memory is supporting context only.
-- Preserve the static HTML/CSS/JavaScript architecture unless a task explicitly changes it.
-- Keep A1, A2, and A3 as genuinely different UX branches, not color-only themes.
+- `prototype/` stays static HTML/CSS/JavaScript with no dependencies. It is a reference, not the product.
+- The production build (Next.js + TypeScript) goes at the repository root. Follow the stack in `docs/DECISIONS.md` and do not add packages outside it without recording a decision.
+- A3 is the primary design. A1 and A2 remain only as comparison references; do not extend A2's navigation model (see `docs/DECISIONS.md`).
 - A3 remains the default design unless a recorded decision changes it.
 - Use fictional works, authors, covers, and reviews in the prototype.
 - Maintain both mobile and desktop layouts.
@@ -22,7 +25,7 @@ Use the project-memory documents only when relevant:
 
 ## Verification
 
-- Run `node --check app.js` after JavaScript changes.
+- Run `node --check prototype/app.js` after prototype JavaScript changes.
 - Render affected desktop and mobile routes after layout or responsive CSS changes.
 - Verify the relevant navigation path end to end, not only the edited screen.
 

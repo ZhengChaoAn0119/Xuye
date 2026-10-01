@@ -4,16 +4,19 @@
 
 `續頁` is the working name for a Traditional Chinese serial-fiction reading platform. It serves long and short fiction organized as works and chapters. Initial content is uploaded by the platform; author self-publishing is out of scope.
 
-The repository currently contains an interactive front-end prototype built with plain HTML, CSS, and JavaScript. It has no build step or external package dependency.
+The repository contains:
 
-## Main files
+- `prototype/`: an interactive front-end prototype built with plain HTML, CSS, and JavaScript, with no build step or package dependency. It is the visual and interaction reference.
+- The production build (Next.js + TypeScript), which is planned and will live at the repository root. Its stack and constraints are recorded in `docs/DECISIONS.md` under "Production build".
 
-- `index.html`: application shell.
-- `app.js`: fictional content data, hash routes, rendering, and prototype interactions.
-- `styles.css`: responsive styles and the A1/A2/A3 design branches.
-- `preview-*.png`: rendered visual checks.
+## Prototype files
 
-## Routes
+- `prototype/index.html`: application shell.
+- `prototype/app.js`: fictional content data, hash routes, rendering, and prototype interactions.
+- `prototype/styles.css`: responsive styles and the A1/A2/A3 design branches.
+- `prototype/preview-*.png`: rendered visual checks.
+
+## Prototype routes
 
 - `#/compare`: design-branch comparison.
 - `#/latest`: latest-updated works.
@@ -37,10 +40,14 @@ The repository currently contains an interactive front-end prototype built with 
 ## Design branches
 
 - A1 `紙頁書房`: quiet, literary, and paper-like.
-- A2 `快速追更`: Komiic-inspired utility model with a top toolbar, desktop side rail, mobile tabs, and high-density update cards.
-- A3 `現代書庫`: restrained publishing-platform layout and the current default.
+- A2 `快速追更`: Komiic-inspired utility model with a top toolbar, desktop side rail, mobile tabs, and high-density update cards. Rejected structurally; its palette is an A3 color candidate.
+- A3 `現代書庫`: restrained publishing-platform layout and the primary direction.
+
+## Prototype state
+
+Interactions persist per browser in `localStorage` under `xuye:*` keys (bookshelf, history, progress, bookmarks, votes, blocks, own reviews, preferences, reader settings). This stands in for account sync. Clear those keys to reset the demo data.
 
 ## Validation
 
-- Run `node --check app.js` after JavaScript changes.
+- Run `node --check prototype/app.js` after prototype JavaScript changes.
 - For visual changes, render and inspect the affected hash routes at desktop and mobile widths.

@@ -506,3 +506,56 @@ body.scheme-a2 .reader-bottom button { border-radius: 3px; }
   .page-head { flex-wrap: wrap; }
   .page-head .count { width: 100%; }
 }
+
+/* Interaction states for wired-up prototype controls. */
+.empty-state { padding: 48px 20px; text-align: center; border: 1px dashed var(--line); border-radius: var(--radius); background: var(--surface); }
+.empty-state strong { display: block; font-size: 16px; }
+.empty-state p { margin: 8px 0 16px; color: var(--muted); font-size: 14px; }
+.filter-sep { width: 1px; align-self: stretch; margin: 4px 4px; background: var(--line); }
+.head-actions { display: flex; gap: 8px; }
+.tags a { padding: 6px 10px; background: var(--soft); color: var(--brand); border-radius: 99px; font-size: 12px; font-weight: 700; }
+.tags a:hover { text-decoration: underline; }
+.btn.saved, .btn.voted { color: var(--brand); border-color: var(--brand); background: var(--soft); }
+.btn[aria-disabled="true"] { opacity: .4; pointer-events: none; }
+.chapter.current { color: var(--brand); font-weight: 800; }
+.chapter.current small { color: var(--brand); }
+.chapter-more { width: 100%; margin-top: 10px; }
+.detail-actions .btn { white-space: nowrap; }
+.quota-mini:hover { color: var(--ink); }
+.recommended.muted { color: var(--muted); }
+
+.review-user { position: relative; }
+.review-more { flex: none; margin-left: auto; width: 34px; height: 32px; padding: 0; border: 0; background: transparent; font-size: 9px; letter-spacing: 1px; overflow: hidden; }
+.review-more:hover, .review-more[aria-expanded="true"] { background: var(--surface-2); }
+.review-menu { position: absolute; z-index: 30; top: 38px; right: 0; min-width: 170px; padding: 6px; display: grid; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); }
+.review-menu button { padding: 9px 10px; border: 0; background: transparent; text-align: left; border-radius: 5px; cursor: pointer; font-size: 13px; }
+.review-menu button:hover { background: var(--surface-2); }
+.review-card .btn + .btn { margin-left: 6px; }
+.own-pill { margin-left: 8px; vertical-align: 2px; }
+.spoiler-mask { padding: 22px; background: var(--surface-2); border-radius: 8px; text-align: center; }
+.spoiler-mask p { margin: 6px 0 12px; font-size: 13px; }
+.blocked-note { margin-top: 14px; color: var(--muted); font-size: 13px; }
+.link-btn { border: 0; padding: 0; background: none; color: var(--brand); font-weight: 700; cursor: pointer; text-decoration: underline; }
+
+.field select, .field textarea { width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; background: var(--bg); color: var(--ink); }
+.field select { height: 44px; padding-block: 0; }
+.field textarea { resize: vertical; line-height: 1.6; }
+.field-note { color: var(--muted); font-size: 12px; line-height: 1.5; }
+.star-picker { display: flex; gap: 2px; }
+.star-picker button { width: 38px; height: 38px; border: 0; background: transparent; font-size: 26px; color: var(--line); cursor: pointer; }
+.star-picker button.on { color: #e29a21; }
+.radio-list { display: grid; gap: 4px; margin-bottom: 14px; }
+.radio-list label, .check-line { display: flex; align-items: center; gap: 9px; padding: 8px 2px; font-size: 14px; cursor: pointer; }
+.modal { max-height: calc(100vh - 36px); overflow-y: auto; }
+.toc-list { max-height: 60vh; overflow-y: auto; }
+
+.stepper { display: flex; align-items: center; gap: 10px; }
+.stepper span { min-width: 44px; text-align: center; font-weight: 800; }
+.reading-preview { min-height: 0; padding: 22px 26px; border: 1px solid var(--line); border-radius: var(--radius); }
+.reading-preview p { margin: 0; }
+.reader-bottom button[aria-pressed="true"] { background: var(--surface-2); }
+.icon-btn.marked { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 640px) {
+  .setting { flex-wrap: wrap; }
+  .filter-sep { display: none; }
+}
