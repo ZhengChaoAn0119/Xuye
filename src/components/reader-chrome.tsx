@@ -1,0 +1,177 @@
+"use client";
+
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { t } from "@/i18n";
+import {
+  applyPrefs,
+  normalizePrefs,
+  READER_PREFS_KEY,
+  READER_SIZE,
+  type ReaderPrefs,
+  type ReaderTheme,
+} from "./reader-prefs";
+import styles from "./reader-chrome.module.css";
+
+type TocItem = { position: number; title: string; isNote: boolean };
+
+type ReaderChromeProps = {
+  workId: number;
+  workTitle: string;
+  chapterTitle: string;
+  current: number;
+  prev: number | null;
+  next: number | null;
+  toc: TocItem[];
+};
+
+function loadPrefs(): ReaderPrefs {
+  try {
+    return normalizePrefs(JSON.parse(localStorage.getItem(READER_PREFS_KEY) ?? "{}"));
+  } catch {
+    return normalizePrefs(null);
+  }
+}
+
+/** Top bar, floating controls, and table of contents for the chapter reader. */
+export function ReaderChrome(props: ReaderChromeProps) {
+  const { workId, workTitle, chapterTitle, current, prev, next, toc } = props;
+  const router = useRouter();
+  const [prefs, setPrefs] = useState<ReaderPrefs | null>(null);
+  const [tocOpen, setTocOpen] = useState(false);
+  const currentRef = useRef<HTMLAnchorElement>(null);
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- read device prefs after hydration
+  useEffect(() => setPrefs(loadPrefs()), []);
+
+  const update = (change: Partial<ReaderPrefs>) => {
+    const nextPrefs = normalizePrefs({ ...(prefs ?? loadPrefs()), ...change });
+    setPrefs(nextPrefs);
+    applyPrefs(nextPrefs);
+    try {
+      localStorage.setItem(READER_PREFS_KEY, JSON.stringify(nextPrefs));
+    } catch {
+      // storage unavailable: prefs last for this page only
+    }
+  };
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (event.target instanceof HTMLElement && event.target.closest("input, textarea, select"))
+        return;
+      if (event.key === "Escape") setTocOpen(false);
+      else if (event.key === "ArrowLeft" && prev !== null)
+        router.push(`/works/${workId}/chapters/${prev}`);
+      else if (event.key === "ArrowRight" && next !== null)
+        router.push(`/works/${workId}/chapters/${next}`);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [router, workId, prev, next]);
+
+  useEffect(() => {
+    if (tocOpen) currentRef.current?.scrollIntoView({ block: "center" });
+  }, [tocOpen]);
+
+  const themes: [ReaderTheme, string, string][] = [
+    ["sepia", "◐", t("reader.themeSepia")],
+    ["white", "○", t("reader.themeWhite")],
+    ["dark", "●", t("reader.themeDark")],
+  ];
+
+  return (
+    <>
+      <header className={styles.top}>
+        <Link href={`/works/${workId}`} className={styles.iconButton} aria-label={t("reader.back")}>
+          ←
+        </Link>
+        <p className={styles.title}>
+          {workTitle}・{chapterTitle}
+        </p>
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => setTocOpen(true)}
+          aria-label={t("reader.toc")}
+          aria-expanded={tocOpen}
+        >
+          ☰
+        </button>
+      </header>
+
+      <div className={styles.controls} role="toolbar" aria-label={t("reader.controls")}>
+        <button
+          type="button"
+          onClick={() => update({ size: (prefs?.size ?? READER_SIZE.default) - 1 })}
+          aria-label={t("reader.fontSmaller")}
+          title={t("reader.fontSmaller")}
+        >
+          A−
+        </button>
+        {themes.map(([theme, glyph, label]) => (
+          <button
+            key={theme}
+            type="button"
+            onClick={() => update({ theme })}
+            aria-label={label}
+            title={label}
+            aria-pressed={prefs ? prefs.theme === theme : undefined}
+          >
+            {glyph}
+          </button>
+        ))}
+        <button
+          type="button"
+          onClick={() => update({ size: (prefs?.size ?? READER_SIZE.default) + 1 })}
+          aria-label={t("reader.fontLarger")}
+          title={t("reader.fontLarger")}
+        >
+          A＋
+        </button>
+        <button type="button" onClick={() => setTocOpen(true)} aria-label={t("reader.toc")}>
+          ☰
+        </button>
+      </div>
+
+      {tocOpen && (
+        <div className={styles.backdrop} onClick={() => setTocOpen(false)}>
+          <nav
+            className={styles.drawer}
+            aria-label={t("reader.toc")}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className={styles.drawerHead}>
+              <strong>{workTitle}</strong>
+              <button
+                type="button"
+                className={styles.iconButton}
+                onClick={() => setTocOpen(false)}
+                aria-label={t("reader.closeToc")}
+              >
+                ×
+              </button>
+            </div>
+            <ol className={styles.tocList}>
+              {toc.map((item) => (
+                <li key={item.position}>
+                  <Link
+                    ref={item.position === current ? currentRef : undefined}
+                    href={`/works/${workId}/chapters/${item.position}`}
+                    className={item.position === current ? styles.tocCurrent : styles.tocItem}
+                    aria-current={item.position === current ? "page" : undefined}
+                    onClick={() => setTocOpen(false)}
+                  >
+                    {item.isNote && <span className={styles.note}>{t("common.note")}</span>}
+                    {item.title}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </div>
+      )}
+    </>
+  );
+}

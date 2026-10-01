@@ -1,0 +1,185 @@
+.page {
+  max-width: var(--content);
+  margin: 0 auto;
+  padding: 34px var(--gutter) 24px;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  gap: 36px;
+  align-items: start;
+}
+
+.eyebrow {
+  margin: 4px 0 8px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.title {
+  margin: 0;
+  font-family: var(--font-reading);
+  font-size: clamp(28px, 3.6vw, 40px);
+  line-height: 1.15;
+}
+
+.author {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.tags {
+  list-style: none;
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tags a {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: var(--radius-pill);
+  background: var(--soft);
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.synopsis {
+  margin: 18px 0 0;
+  max-width: 720px;
+  line-height: 1.85;
+  white-space: pre-line;
+}
+
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+
+.primary,
+.secondary {
+  min-height: var(--control-height);
+  padding: 0 20px;
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-control);
+  font-weight: 800;
+  border: 1px solid var(--brand);
+}
+
+.primary {
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.secondary {
+  background: var(--surface);
+  color: var(--brand);
+}
+
+.restricted {
+  margin-top: 22px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+}
+
+.restricted p {
+  margin: 6px 0 0;
+  font-size: 14px;
+}
+
+.facts {
+  margin: 30px 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.facts div {
+  padding: 16px 18px;
+  border-right: 1px solid var(--line);
+}
+
+.facts div:last-child {
+  border-right: 0;
+}
+
+.facts dt {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.facts dd {
+  margin: 6px 0 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.skeleton {
+  height: 420px;
+  border-radius: var(--radius);
+  background: var(--surface-2);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding-top: 22px;
+  }
+
+  /* Cover left of the heading block; everything else spans the full width. */
+  .hero {
+    grid-template-columns: 110px minmax(0, 1fr);
+    gap: 0 16px;
+  }
+
+  .copy {
+    display: contents;
+  }
+
+  .cover {
+    grid-column: 1;
+    grid-row: 1 / span 3;
+  }
+
+  .eyebrow,
+  .title,
+  .author {
+    grid-column: 2;
+  }
+
+  .eyebrow {
+    align-self: end;
+  }
+
+  .synopsis,
+  .actions,
+  .tags,
+  .restricted {
+    grid-column: 1 / -1;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .actions a {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .facts dd {
+    font-size: 15px;
+  }
+}

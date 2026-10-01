@@ -1,0 +1,175 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+}
+
+.primary {
+  max-width: var(--content);
+  height: 62px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-reading);
+  font-size: 22px;
+  font-weight: 900;
+  flex: none;
+}
+
+.brandMark {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-control);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: 16px;
+}
+
+.search {
+  position: relative;
+  flex: 1;
+  max-width: 560px;
+}
+
+.searchInput {
+  width: 100%;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--bg);
+  padding: 0 44px 0 13px;
+  font-size: 14px;
+}
+
+.searchButton {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.accountMenu {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.account {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.accountMenu .account {
+  margin-left: 0;
+}
+
+.account:hover {
+  color: var(--brand);
+}
+
+.accountPlaceholder {
+  margin-left: auto;
+  width: 40px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 800;
+  font-size: 13px;
+}
+
+.secondary {
+  max-width: var(--content);
+  height: 42px;
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+  display: flex;
+  border-top: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+}
+
+.secondary a {
+  position: relative;
+  min-width: 84px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.secondary a.active {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.secondary a.active::after {
+  content: "";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: -1px;
+  height: 2px;
+  background: var(--brand);
+}
+
+.footer {
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  margin-top: 48px;
+}
+
+.footerInner {
+  max-width: var(--content);
+  margin: 0 auto;
+  padding: 28px var(--gutter) 44px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+@media (max-width: 640px) {
+  .primary {
+    height: 56px;
+    gap: 12px;
+  }
+
+  .brand {
+    font-size: 20px;
+  }
+
+  .searchInput {
+    padding-right: 38px;
+  }
+
+  .accountMenu .account:not(:last-child) {
+    display: none;
+  }
+}

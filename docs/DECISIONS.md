@@ -39,6 +39,17 @@ Update this file only for decisions that should survive tools, computers, branch
 - Dependencies added in phase 1: `fflate` (EPUB unzip) and `tsx` (TypeScript CLI scripts with path aliases).
 - E2E tests use a separate database (`<db>_e2e`, created by `pnpm e2e:prepare`) and never touch development data.
 
+### Public reader site (decided 2026-10-01, phase 2)
+
+- Public URLs: `/` (latest updates), `/search?q=`, `/works/{id}`, and `/works/{id}/chapters/{position}`. IDs are numeric; there are no slugs.
+- A work is public once it has at least one visible chapter. Story chapter counts exclude author notes.
+- Public reads are cached with `use cache` under the `catalog` cacheLife (60 s revalidate), tagged `works` / `work:{id}`. Chapter text is never cached; quota checks (phase 4) attach to `readChapterBody`.
+- The home list renders per request (`connection()`) from cached data, so `next build` never needs a database. Param routes are App Shell + on-demand cached pages.
+- Works flagged `has_sexual` are excluded from listings and search, and their work and reader pages show a gate, until the 18+ preference ships (phase 3).
+- Chapter and search pages are `noindex`; work pages are indexable. Sitemap, canonical URLs, and `metadataBase` wait for the public domain (phase 5).
+- Reader font size and theme are stored per device (`localStorage`, applied by a static boot script before paint); account sync comes in phase 3. Keyboard ← → changes chapter.
+- Streamed pages can return HTTP 200 for not-found and forbidden UIs. Content never leaks; tests assert on the rendered UI, not the status code.
+
 ### Open (recommendations given 2026-10-01, awaiting confirmation)
 
 - Production email: an SMTP-compatible transactional provider on a dedicated subdomain with SPF/DKIM/DMARC. Recommended: Resend to start, or Amazon SES if hosting on AWS. Switching providers only changes `EMAIL_SERVER` and `EMAIL_FROM`.

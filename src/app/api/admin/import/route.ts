@@ -68,7 +68,8 @@ export async function POST(request: Request) {
       publishAt: new Date(),
       actor: actorFor(user),
     });
-    tagsForWork(workId).forEach((tag) => revalidateTag(tag, "max"));
+    // Expire immediately: the admin expects the imported chapters to be public now.
+    tagsForWork(workId).forEach((tag) => revalidateTag(tag, { expire: 0 }));
     return Response.json({ summary, workId });
   } catch (error) {
     if (error instanceof EpubParseError)

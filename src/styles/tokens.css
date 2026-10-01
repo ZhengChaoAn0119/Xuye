@@ -17,6 +17,14 @@
   --star: #e29a21;
   --medal: #d89d28;
 
+  --overlay: rgb(0 0 0 / 0.45);
+
+  /* Generated covers (palettes themselves live in components/work-cover.tsx) */
+  --cover-ink: #ffffff;
+  --cover-glint: rgb(255 255 255 / 0.22);
+  --cover-rule: rgb(255 255 255 / 0.35);
+  --cover-shade: rgb(10 10 10 / 0.6);
+
   /* Status colors (badges, notices) */
   --ok-bg: #e3f1e6;
   --ok-ink: #24663a;

@@ -1,0 +1,134 @@
+.top {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  height: 56px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: color-mix(in srgb, var(--reader-bg) 92%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--reader-ink) 12%, transparent);
+  backdrop-filter: blur(6px);
+  font-family: var(--font-ui);
+}
+
+.title {
+  flex: 1;
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.iconButton {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--reader-ink) 18%, transparent);
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.controls {
+  position: fixed;
+  z-index: 40;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--radius-pill);
+  border: 1px solid color-mix(in srgb, var(--reader-ink) 14%, transparent);
+  background: color-mix(in srgb, var(--reader-bg) 94%, transparent);
+  box-shadow: var(--shadow-panel);
+  font-family: var(--font-ui);
+}
+
+.controls button {
+  min-width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.controls button[aria-pressed="true"],
+.controls button:hover {
+  background: color-mix(in srgb, var(--reader-ink) 10%, transparent);
+}
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--overlay);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.drawer {
+  width: min(420px, 100%);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+}
+
+.drawerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+.tocList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.tocItem,
+.tocCurrent {
+  display: block;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--line);
+  font-size: 14px;
+}
+
+.tocItem:hover {
+  color: var(--brand);
+}
+
+.tocCurrent {
+  color: var(--brand);
+  font-weight: 800;
+  background: var(--soft);
+}
+
+.note {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: var(--radius-pill);
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  font-size: 11px;
+  font-weight: 700;
+}

@@ -31,6 +31,9 @@ export async function signIn(page: Page, email: string) {
   await page.goto(await waitForMagicLink(page.request, email));
 }
 
+export const uniqueTitle = (prefix: string) =>
+  `${prefix} ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+
 /** Grant admin directly in the E2E database (the CLI equivalent is `pnpm user:promote`). */
 export async function promoteToAdmin(email: string) {
   const sql = postgres(e2eDatabaseUrl(), { max: 1 });

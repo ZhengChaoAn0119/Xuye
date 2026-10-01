@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("home page renders in Traditional Chinese", async ({ page }) => {
   await page.goto("/");
   await expect(page.locator("html")).toHaveAttribute("lang", "zh-Hant");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("正式版建置中");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("最新更新");
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth > window.innerWidth,
   );

@@ -13,7 +13,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang={defaultLocale}>
+    // The reader's boot script sets data-reader-theme/--reader-size on <html> before hydration.
+    <html lang={defaultLocale} suppressHydrationWarning>
       <body>
         <a className="skip-link" href="#main">
           {t("a11y.skipToContent")}

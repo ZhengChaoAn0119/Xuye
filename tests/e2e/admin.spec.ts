@@ -21,9 +21,13 @@ test("signed-out visitors are sent to sign-in and readers get a 404", async ({ p
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/api\/auth\/signin/);
 
+  // Streaming may already have sent a 200, so assert on content: the not-found UI
+  // renders and no admin content reaches the browser.
   await signIn(page, uniqueEmail("e2e-reader"));
-  const response = await page.goto("/admin");
-  expect(response?.status()).toBe(404);
+  await page.goto("/admin");
+  await expect(page.getByRole("heading", { name: "找不到頁面" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "總覽" })).toHaveCount(0);
+  expect(await page.content()).not.toContain("即將發布");
 });
 
 test("the import API rejects anonymous uploads", async ({ request }) => {

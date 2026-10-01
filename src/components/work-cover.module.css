@@ -1,0 +1,58 @@
+.cover {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 2 / 3;
+  border-radius: var(--radius-control);
+  background:
+    radial-gradient(circle at 74% 22%, var(--cover-glint) 0 7%, transparent 8%),
+    linear-gradient(155deg, transparent 38%, var(--cover-accent)), var(--cover-base);
+  box-shadow: var(--shadow-cover);
+  color: var(--cover-ink);
+}
+
+.cover::before {
+  content: "";
+  position: absolute;
+  inset: 8% 9% auto auto;
+  width: 34%;
+  height: 1px;
+  background: var(--cover-rule);
+}
+
+.copy {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 14px;
+  background: linear-gradient(transparent 38%, var(--cover-shade));
+}
+
+.title {
+  font-family: var(--font-reading);
+  font-size: clamp(16px, 1.5vw, 21px);
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 1px 2px var(--cover-shade);
+}
+
+.author {
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.detail .title {
+  font-size: clamp(18px, 2vw, 26px);
+}
+
+.mini {
+  width: 38px;
+  border-radius: 2px;
+  box-shadow: none;
+}

@@ -17,12 +17,24 @@ type Paths<T> = {
 }[keyof T & string];
 export type MessageKey = Paths<Messages>;
 
-/** Look up a UI string by dotted key, e.g. t("nav.latest"). */
-export function t(key: MessageKey, locale: Locale = defaultLocale): string {
+/**
+ * Look up a UI string by dotted key, e.g. t("nav.latest").
+ * `{name}` placeholders are filled from `vars`; numbers use zh-TW grouping.
+ */
+export function t(
+  key: MessageKey,
+  vars?: Record<string, string | number>,
+  locale: Locale = defaultLocale,
+): string {
   let node: unknown = catalogs[locale];
   for (const part of key.split(".")) {
     node = (node as Record<string, unknown>)[part];
   }
   if (typeof node !== "string") throw new Error(`Missing message: ${key} (${locale})`);
-  return node;
+  if (!vars) return node;
+  return node.replace(/\{(\w+)\}/g, (match, name: string) => {
+    const value = vars[name];
+    if (value === undefined) return match;
+    return typeof value === "number" ? value.toLocaleString("zh-TW") : value;
+  });
 }

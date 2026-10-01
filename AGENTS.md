@@ -54,6 +54,8 @@ Conventions:
 - Every admin page, Server Action, and admin API checks authorization itself (`requireAdmin()` / `adminOrResponse()`); a layout check does not protect actions. Admin pages put their session read and data inside `<Suspense>` (see the existing pages).
 - With Cache Components, a `200` status does not prove a streamed page rendered: e2e tests must assert on content.
 - Raw `sql\`\`` fragments do not map parameter types: pass dates as ISO strings with an explicit cast, or use column helpers (`gt`, `lte`, …).
+- Only one `next dev` may run per project. If one is already running (often the user's), do not kill it: run e2e against the production build with `pnpm build` and then `CI=1 PW_CHANNEL=chrome pnpm test:e2e`.
+- Client hooks that read the URL (`usePathname`, `useSearchParams`) must sit inside `<Suspense>`, or `next build` fails to prerender the shell. See `components/site-nav.tsx`.
 - Never commit book content. Import EPUBs from outside the repo; tests use `buildTestEpub()` fixtures.
 - Record any new dependency in `docs/DECISIONS.md` with the reason.
 
