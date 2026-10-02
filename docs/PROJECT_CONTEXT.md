@@ -7,7 +7,7 @@
 The repository contains:
 
 - `prototype/`: an interactive front-end prototype built with plain HTML, CSS, and JavaScript, with no build step or package dependency. It is the visual and interaction reference.
-- The production app (Next.js 16 + TypeScript + PostgreSQL), at the repository root. Phases 0–2 are done: scaffold, content and admin, and the public reader site. The stack and constraints are in `docs/DECISIONS.md` under "Production build", the structure and phases in `docs/ARCHITECTURE.md`, and current progress in `docs/handoffs/CURRENT.md`.
+- The production app (Next.js 16 + TypeScript + PostgreSQL), at the repository root. Phases 0–4 are done: scaffold, content and admin, the public reader site, accounts with cross-device sync, and rolling reading quotas with application-level anti-scraping. The stack and constraints are in `docs/DECISIONS.md` under "Production build", the structure and phases in `docs/ARCHITECTURE.md`, and current progress in `docs/handoffs/CURRENT.md`.
 
 ## Prototype files
 
@@ -31,7 +31,7 @@ The repository contains:
 
 ## Product model
 
-- Visitor quota is lower than registered Free quota; all quotas use a rolling 24-hour window.
+- Visitors receive 10 story chapters and registered Free readers 50 story chapters per rolling 24-hour window; `/admin/quota` can adjust both values.
 - A loaded chapter is never interrupted. Limits are handled before loading the next chapter.
 - Paid tiers increase reading capacity and remove ads. Paid identity decoration is optional.
 - Reading progress, bookshelf, settings, and identity synchronize across devices.

@@ -1,5 +1,11 @@
 import type { Metadata, Viewport } from "next";
+import { Suspense } from "react";
+import { AccountPreferenceSync } from "@/components/account-preference-sync";
+import { PALETTE_BOOT_SCRIPT } from "@/components/reader-prefs";
 import { defaultLocale, t } from "@/i18n";
+import { getCurrentUser } from "@/server/authz";
+import { getDb } from "@/server/db";
+import { getReaderPreferences } from "@/server/services/reader-account";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -11,14 +17,25 @@ export const viewport: Viewport = {
   themeColor: "#f7f7f5",
 };
 
+async function PreferenceSyncSlot() {
+  const user = await getCurrentUser();
+  if (!user) return null;
+  const state = await getReaderPreferences(getDb(), user.id);
+  return <AccountPreferenceSync {...state} />;
+}
+
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     // The reader's boot script sets data-reader-theme/--reader-size on <html> before hydration.
     <html lang={defaultLocale} suppressHydrationWarning>
       <body>
+        <script dangerouslySetInnerHTML={{ __html: PALETTE_BOOT_SCRIPT }} />
         <a className="skip-link" href="#main">
           {t("a11y.skipToContent")}
         </a>
+        <Suspense fallback={null}>
+          <PreferenceSyncSlot />
+        </Suspense>
         {children}
       </body>
     </html>

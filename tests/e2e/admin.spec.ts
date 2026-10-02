@@ -19,7 +19,7 @@ const fixtureEpub = (title: string) => ({
 
 test("signed-out visitors are sent to sign-in and readers get a 404", async ({ page }) => {
   await page.goto("/admin");
-  await expect(page).toHaveURL(/\/api\/auth\/signin/);
+  await expect(page).toHaveURL(/\/signin/);
 
   // Streaming may already have sent a 200, so assert on content: the not-found UI
   // renders and no admin content reaches the browser.

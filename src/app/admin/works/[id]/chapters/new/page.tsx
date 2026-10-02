@@ -39,6 +39,7 @@ async function NewChapterPageContent({ params }: PageProps<"/admin/works/[id]/ch
           }}
           isEdit={false}
           submitLabel="新增章節"
+          cancelHref={`/admin/works/${String(work.id)}`}
         />
       </section>
     </>

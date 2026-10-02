@@ -5,19 +5,33 @@ import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import styles from "./site-header.module.css";
 
-type NavProps = { label: string; latest: string };
+type NavProps = { label: string; latest: string; library: string; history: string };
 
-function NavLinks({ label, latest, activePath }: NavProps & { activePath: string | null }) {
+function NavLinks({
+  label,
+  latest,
+  library,
+  history,
+  activePath,
+}: NavProps & { activePath: string | null }) {
   const latestActive = activePath === "/";
+  const links = [
+    ["/", latest, latestActive],
+    ["/library", library, activePath === "/library"],
+    ["/history", history, activePath === "/history"],
+  ] as const;
   return (
     <nav className={styles.secondary} aria-label={label}>
-      <Link
-        href="/"
-        className={latestActive ? styles.active : undefined}
-        aria-current={latestActive ? "page" : undefined}
-      >
-        {latest}
-      </Link>
+      {links.map(([href, text, active]) => (
+        <Link
+          key={href}
+          href={href}
+          className={active ? styles.active : undefined}
+          aria-current={active ? "page" : undefined}
+        >
+          {text}
+        </Link>
+      ))}
     </nav>
   );
 }

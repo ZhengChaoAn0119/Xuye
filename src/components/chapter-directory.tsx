@@ -26,7 +26,11 @@ export function ChapterDirectory({ workId, items }: { workId: number; items: Dir
       <ol className={styles.list}>
         {shown.map((item) => (
           <li key={item.position}>
-            <Link href={`/works/${workId}/chapters/${item.position}`} className={styles.item}>
+            <Link
+              href={`/works/${workId}/chapters/${item.position}`}
+              className={styles.item}
+              prefetch={false}
+            >
               <span className={styles.itemTitle}>
                 {item.isNote && <span className={styles.note}>{t("common.note")}</span>}
                 {item.title}

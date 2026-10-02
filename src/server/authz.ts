@@ -29,6 +29,20 @@ export async function requireAdmin(returnTo = "/admin"): Promise<CurrentUser> {
   return user;
 }
 
+/** Guard for reader account pages and actions. */
+export async function requireUser(returnTo = "/account"): Promise<CurrentUser> {
+  const user = await getCurrentUser();
+  if (!user) redirect(`/signin?callbackUrl=${encodeURIComponent(returnTo)}`);
+  return user;
+}
+
+/** Route Handler variant for signed-in reader APIs. */
+export async function userOrResponse(): Promise<CurrentUser | Response> {
+  const user = await getCurrentUser();
+  if (!user) return Response.json({ error: "unauthorized" }, { status: 401 });
+  return user;
+}
+
 /** Route Handler variant: returns an error Response instead of redirecting. */
 export async function adminOrResponse(): Promise<CurrentUser | Response> {
   const user = await getCurrentUser();

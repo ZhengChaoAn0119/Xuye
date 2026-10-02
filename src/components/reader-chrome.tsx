@@ -21,9 +21,12 @@ type ReaderChromeProps = {
   workTitle: string;
   chapterTitle: string;
   current: number;
+  chapterId: number;
   prev: number | null;
   next: number | null;
   toc: TocItem[];
+  signedIn: boolean;
+  initialBookmarked: boolean;
 };
 
 function loadPrefs(): ReaderPrefs {
@@ -36,10 +39,11 @@ function loadPrefs(): ReaderPrefs {
 
 /** Top bar, floating controls, and table of contents for the chapter reader. */
 export function ReaderChrome(props: ReaderChromeProps) {
-  const { workId, workTitle, chapterTitle, current, prev, next, toc } = props;
+  const { workId, workTitle, chapterTitle, current, chapterId, prev, next, toc, signedIn } = props;
   const router = useRouter();
   const [prefs, setPrefs] = useState<ReaderPrefs | null>(null);
   const [tocOpen, setTocOpen] = useState(false);
+  const [bookmarked, setBookmarked] = useState(props.initialBookmarked);
   const currentRef = useRef<HTMLAnchorElement>(null);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- read device prefs after hydration
@@ -54,6 +58,36 @@ export function ReaderChrome(props: ReaderChromeProps) {
     } catch {
       // storage unavailable: prefs last for this page only
     }
+    if (signedIn) {
+      const remote: Record<string, unknown> = {};
+      if (change.theme !== undefined) remote.readerTheme = nextPrefs.theme;
+      if (change.size !== undefined) remote.readerFontSize = nextPrefs.size;
+      if (change.font !== undefined) remote.readerFont = nextPrefs.font;
+      if (change.lineHeight !== undefined) remote.lineHeight = nextPrefs.lineHeight;
+      if (change.pageWidth !== undefined) remote.pageWidth = nextPrefs.pageWidth;
+      void fetch("/api/v1/me/preferences", {
+        method: "PUT",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(remote),
+      });
+    }
+  };
+
+  const toggleBookmark = async () => {
+    if (!signedIn) {
+      router.push(
+        `/signin?callbackUrl=${encodeURIComponent(`/works/${workId}/chapters/${current}`)}`,
+      );
+      return;
+    }
+    const nextValue = !bookmarked;
+    setBookmarked(nextValue);
+    const response = await fetch("/api/v1/me/bookmarks", {
+      method: "PUT",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ chapterId, bookmarked: nextValue }),
+    });
+    if (!response.ok) setBookmarked(!nextValue);
   };
 
   useEffect(() => {
@@ -98,6 +132,15 @@ export function ReaderChrome(props: ReaderChromeProps) {
           aria-expanded={tocOpen}
         >
           ☰
+        </button>
+        <button
+          type="button"
+          className={styles.iconButton}
+          onClick={() => void toggleBookmark()}
+          aria-label={bookmarked ? t("reader.removeBookmark") : t("reader.addBookmark")}
+          aria-pressed={bookmarked}
+        >
+          {bookmarked ? "♥" : "♡"}
         </button>
       </header>
 
@@ -162,6 +205,7 @@ export function ReaderChrome(props: ReaderChromeProps) {
                     className={item.position === current ? styles.tocCurrent : styles.tocItem}
                     aria-current={item.position === current ? "page" : undefined}
                     onClick={() => setTocOpen(false)}
+                    prefetch={false}
                   >
                     {item.isNote && <span className={styles.note}>{t("common.note")}</span>}
                     {item.title}

@@ -3,13 +3,27 @@ import { normalizePrefs, PREFS_BOOT_SCRIPT, READER_PREFS_KEY } from "./reader-pr
 
 describe("normalizePrefs", () => {
   it("falls back to defaults for missing or invalid values", () => {
-    expect(normalizePrefs(null)).toEqual({ theme: "sepia", size: 19 });
-    expect(normalizePrefs({ theme: "neon", size: "big" })).toEqual({ theme: "sepia", size: 19 });
+    expect(normalizePrefs(null)).toEqual({
+      theme: "sepia",
+      size: 19,
+      font: "serif",
+      palette: "a3",
+      lineHeight: 205,
+      pageWidth: 720,
+    });
+    expect(normalizePrefs({ theme: "neon", size: "big" })).toEqual({
+      theme: "sepia",
+      size: 19,
+      font: "serif",
+      palette: "a3",
+      lineHeight: 205,
+      pageWidth: 720,
+    });
   });
 
   it("clamps and rounds the font size", () => {
-    expect(normalizePrefs({ theme: "dark", size: 99 })).toEqual({ theme: "dark", size: 26 });
-    expect(normalizePrefs({ theme: "white", size: 3 })).toEqual({ theme: "white", size: 15 });
+    expect(normalizePrefs({ theme: "dark", size: 99 })).toMatchObject({ theme: "dark", size: 26 });
+    expect(normalizePrefs({ theme: "white", size: 3 })).toMatchObject({ theme: "white", size: 15 });
     expect(normalizePrefs({ size: 20.6 }).size).toBe(21);
   });
 });
@@ -28,12 +42,18 @@ describe("PREFS_BOOT_SCRIPT", () => {
       },
     };
     new Function("localStorage", "document", PREFS_BOOT_SCRIPT)(env.localStorage, env.document);
-    return { theme: root.dataset.readerTheme, size: root.style.get("--reader-size") };
+    return {
+      theme: root.dataset.readerTheme,
+      palette: root.dataset.palette,
+      size: root.style.get("--reader-size"),
+    };
   }
 
   it.each([
     [null],
     ['{"theme":"dark","size":24}'],
+    ['{"palette":"a1"}'],
+    ['{"palette":"alt"}'],
     ['{"theme":"neon","size":99}'],
     ['{"size":3}'],
     ["not json"],
@@ -48,9 +68,13 @@ describe("PREFS_BOOT_SCRIPT", () => {
     const result = boot(stored);
     if (stored === "not json") {
       // Unparseable storage leaves the page on its CSS defaults.
-      expect(result).toEqual({ theme: undefined, size: undefined });
+      expect(result).toEqual({ theme: undefined, palette: undefined, size: undefined });
     } else {
-      expect(result).toEqual({ theme: expected.theme, size: `${expected.size}px` });
+      expect(result).toEqual({
+        theme: expected.theme,
+        palette: expected.palette,
+        size: `${expected.size}px`,
+      });
     }
   });
 });

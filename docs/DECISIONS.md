@@ -50,6 +50,26 @@ Update this file only for decisions that should survive tools, computers, branch
 - Reader font size and theme are stored per device (`localStorage`, applied by a static boot script before paint); account sync comes in phase 3. Keyboard ← → changes chapter.
 - Streamed pages can return HTTP 200 for not-found and forbidden UIs. Content never leaks; tests assert on the rendered UI, not the status code.
 
+### Accounts and synchronization (implemented 2026-10-02, phase 3)
+
+- Reader auth uses custom A3 pages at `/signin`, `/verify-request`, and `/auth-error`. Email magic links are always available when SMTP is configured; Google appears only when its credentials are configured. Apple remains deferred.
+- `/library`, `/history`, and `/account` require a signed-in reader. Signed-out visitors are returned to the requested page after authentication.
+- Reading progress keeps both the last opened chapter and the furthest chapter reached. The last opened chapter drives "continue reading" and history; the furthest chapter drives the bookshelf's unread/new/caught-up state.
+- Exact position within a chapter is stored as an integer from 0–10,000 (0–100% in basis points). It is device-independent and remains stable when font, width, or line-height settings differ.
+- Removing an item from history sets `hidden_from_history_at`; it does not delete reading progress. Opening that work again restores it to history.
+- Reader display preferences remain mirrored in `localStorage` for pre-paint rendering. For signed-in readers, an existing server record wins; on the first sign-in, local display preferences seed the server record.
+- Sexual and graphic-violence content are hidden independently. Sexual content requires a stored birth date and an 18+ verification timestamp before it can be enabled.
+- Bookmarks are per chapter and synchronize for signed-in readers. Visitors may read but do not receive bookshelf, history, progress, or bookmark synchronization.
+
+### Reading quota and application anti-scraping (implemented 2026-10-02, phase 4)
+
+- Visitors receive 10 story chapters and registered Free readers receive 50 story chapters in a rolling 24-hour window beginning with the first charged chapter. Both values are editable at `/admin/quota`; the window length remains 24 hours.
+- A `QuotaCharge` is unique per window and chapter, so reloads and rereads do not charge twice. Author notes never use quota. PostgreSQL advisory transaction locks serialize simultaneous requests for one subject.
+- Visitors receive an HTTP-only, signed, one-year random-ID cookie. The cookie ID is the stable quota subject; IP and coarse browser traits are separately HMAC-hashed for abuse signals, and raw IP/trait values are never stored. `VISITOR_ID_SECRET` may separate this purpose from `AUTH_SECRET` in production.
+- Chapter links disable framework prefetch so navigation previews cannot charge quota before entry. A body is fetched only after its request-time quota decision succeeds.
+- PostgreSQL-backed fixed-window limits allow 80 chapter requests per account/visitor and 400 per IP in five minutes. The intentionally wider IP ceiling tolerates shared networks. Cloudflare/WAF remains a deployment-layer task for phase 5.
+- `/privacy` discloses account data, necessary cookies, hashed visitor signals, purposes, sharing, retention, and reader choices. Public contact details must be filled in before launch.
+
 ### Open (recommendations given 2026-10-01, awaiting confirmation)
 
 - Production email: an SMTP-compatible transactional provider on a dedicated subdomain with SPF/DKIM/DMARC. Recommended: Resend to start, or Amazon SES if hosting on AWS. Switching providers only changes `EMAIL_SERVER` and `EMAIL_FROM`.
@@ -102,8 +122,12 @@ Update this file only for decisions that should survive tools, computers, branch
 ## Navigation and visual direction
 
 - The general hierarchy is brand/search/account above latest/bookshelf/history.
-- A3 is the primary design direction (confirmed 2026-10-01 after interactive review). New feature work targets A3 first.
+- Signed-in reader and admin utilities live in one account menu on both desktop and mobile. Admins can enter the back office from that menu; the back office always exposes return-to-site, account, and sign-out actions and marks the active section.
+- Destructive collection actions are recoverable: bookshelf removal and reading-history removal/clear use optimistic feedback with undo; clearing all history also requires confirmation.
+- Admin edit forms warn before link navigation or unload when changes are unsaved, and work/chapter editors expose public previews and explicit cancel destinations.
+- Quota-, rate-, and availability-blocked chapter responses never render successful end-of-chapter or next-chapter navigation.
+- A3 is the primary layout direction (confirmed 2026-10-01 after interactive review). New feature work targets A3 first, and A3 remains the default palette.
 - A2 (Komiic-inspired utility model) was reviewed and rejected for this product's structure and navigation. Its code stays in the prototype only as a comparison reference; do not extend it to more screens.
-- A2's color palette is kept as a candidate alternate palette for A3. It may become an A3 color variant later, without bringing A2's layout along.
-- A1 remains as a comparison reference.
+- A1, A2, and A3 are user-selectable color palettes on the production A3 layout. The choice is stored locally for pre-paint rendering and synchronized through account preferences for signed-in readers; palette selection never changes navigation or page structure.
+- Reader-facing production copy is Traditional Chinese (`zh-Hant`) only for now. Copy continues to use the typed `t()` catalog so `zh-Hans`, `en`, and `ja` catalogs can be added later without replacing component APIs.
 - Prototype works, covers, authors, and reviews remain fictional.

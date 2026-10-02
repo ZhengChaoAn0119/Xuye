@@ -1,6 +1,6 @@
 # 正式版架構規劃
 
-狀態：進行中，階段 0–2 已完成（2026-10-01）。已確定的技術決策以 `docs/DECISIONS.md` 的「Production build」為準；本文件說明怎麼實作。標示「預設」的項目尚可調整，改動時同步更新本文件。
+狀態：進行中，階段 0–4 已完成（階段 4 於 2026-10-02 完成）。已確定的技術決策以 `docs/DECISIONS.md` 的「Production build」為準；本文件說明怎麼實作。標示「預設」的項目尚可調整，改動時同步更新本文件。
 
 ## 1. 技術組成
 
@@ -72,17 +72,19 @@ chapters        id, workId, position(1 起算，等於公開章號), title(原�
 chapter_contents chapterId, body                     純文字、一行一段；查目錄時不用載入內文
 audit_logs      actorId?, actorLabel, action, entityType, entityId, detail(jsonb)
 
-── 階段 3、4 再建 ──
+── 階段 3、4 已實作 ──
 
 BookshelfItem   userId, workId, createdAt            PK(userId, workId)
-ReadingProgress userId, workId, chapterNumber, position, updatedAt,
+ReadingProgress userId, workId, currentChapterPosition, furthestChapterPosition,
+                scrollProgress(0–10000), updatedAt,
                 hiddenFromHistoryAt?                 進度與閱讀紀錄共用；移除紀錄不影響進度
 Bookmark        userId, chapterId, createdAt
 
-VisitorIdentity id, cookieId, ipHash, traitHash, firstSeenAt   只存雜湊值，不存原始資料
-QuotaSetting    subject(VISITOR|FREE|…), chaptersPerWindow     後台可調整
-QuotaWindow     subjectKey, windowStart, used        視窗從第一次扣額度開始算 24 小時
+VisitorIdentity cookieId, ipHash, traitHash, firstSeenAt, lastSeenAt   IP／特徵只存 HMAC，不存原始資料
+QuotaSetting    subject(VISITOR|FREE|…), chaptersPerWindow, windowHours  後台可調整章數
+QuotaWindow     subjectKey, windowStart, windowEnd, used       視窗從第一次扣額度開始算 24 小時
 QuotaCharge     windowId, chapterId, chargedAt       unique(windowId, chapterId)：同一視窗內重讀同章不重複扣
+RateLimitWindow scope, key, windowStart, windowEnd, requests   PostgreSQL 短時請求計數
 ```
 
 第二階段：Review、ReviewVote、Report、UserBlock、MembershipPlan、Subscription、Payment。首版資料表先保留 `tier` 欄位，可以不建這些表。
@@ -104,7 +106,7 @@ QuotaCharge     windowId, chapterId, chargedAt       unique(windowId, chapterId)
 | 最新更新（`/`）         | 每次請求產生，資料走快取     | 收錄                                      |
 | 作品頁（`/works/{id}`） | App Shell＋按需快取          | 收錄；sitemap、canonical 等網域確定後補上 |
 | 搜尋（`/search`）       | 請求時產生，結果依關鍵字快取 | `noindex`                                 |
-| 章節閱讀頁              | 章節資訊快取；內文每次請求   | `noindex`；內文不進快取（階段 4 加額度）  |
+| 章節閱讀頁              | 章節資訊快取；內文每次請求   | `noindex`；內文不進快取並逐次檢查額度     |
 
 ### 4.3 閱讀與額度
 
@@ -114,14 +116,16 @@ QuotaCharge     windowId, chapterId, chargedAt       unique(windowId, chapterId)
 2. 找出或建立這個身分的 `QuotaWindow`。視窗已滿 24 小時就開新視窗。
 3. 這一章在本視窗內已扣過額度，就直接顯示；額度還有剩，就新增一筆 `QuotaCharge` 再顯示。
 4. 額度用完：訪客與已登入使用者都只顯示額度恢復時間。**不設登入牆，也不提示註冊。** 已經載入的章節不會被中斷。
-5. 預先載入下一章：只允許「目前章節的下一章」，一次一章，載入時不扣額度；讀者真的進入時才扣。這條規則防止有人用預載功能繞過額度。
+5. 首版停用所有章節連結的框架預取，讀者真的進入時才扣額度。未來若啟用預載，只能載入目前章節的下一章，且進入前不得扣額度。
 
 ### 4.4 防爬蟲
 
 - 依 IP 和帳號做請求頻率限制。首版用 PostgreSQL 計數；之後流量變大再改用 Redis。
 - 前面加 Cloudflare（或其他 WAF）擋機器人。
-- 偵測到異常讀取速度時，暫時要求額外驗證。
+- 應用層偵測到異常讀取速度時先暫停請求；正式部署接上 WAF 後可改為額外驗證挑戰。
 - 目標是讓**大量自動抓取**變困難；真人手動複製在技術上無法完全阻止。
+
+目前應用層以 5 分鐘固定視窗限制帳號／訪客 80 次、IP 400 次章節請求；較寬鬆的 IP 門檻用來容納共用網路。正式部署時再於前端加 Cloudflare／WAF。
 
 ### 4.5 內容分級
 
@@ -137,8 +141,9 @@ QuotaCharge     windowId, chapterId, chargedAt       unique(windowId, chapterId)
 - 章節：新增（接在最後一章之後）、編輯標題／類型／內文；發布方式有立即發布、排程（台北時間）、草稿、隱藏。
 - EPUB 匯入：後台上傳後先預覽（新增、更新、未變更的章數，判定為公告和隱藏的章節），確認後才寫入；也可用 `pnpm content:import` 大量匯入（預設只預覽，加 `--apply` 才寫入）。
 - 操作紀錄：所有寫入都記錄在 `audit_logs`。
+- 閱讀額度：`/admin/quota` 調整訪客與 Free 會員每個 24 小時視窗的章數，並顯示已辨識訪客與有效視窗數。
 
-之後再做：封面上傳、使用者查詢與停權、額度設定（階段 4）、閱讀數據、章節排序調整、TXT 匯入。
+之後再做：封面上傳、使用者查詢與停權、閱讀數據、章節排序調整、TXT 匯入。
 
 ## 6. 多語系
 
@@ -148,14 +153,14 @@ QuotaCharge     windowId, chapterId, chargedAt       unique(windowId, chapterId)
 
 ## 7. 開發階段
 
-| 階段            | 內容                                                                                | 完成條件                                                             |
-| --------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| 0 基礎建設 ✅   | Next.js 專案、Docker Compose、Drizzle、Auth.js 骨架、lint、測試、CI、`.env.example` | `pnpm check` 全部通過；`docker compose up` 能啟動（2026-10-01 完成） |
-| 1 內容與後台 ✅ | 資料表、後台作品與章節管理、EPUB 匯入、排程                                         | 全部 29 部真實書籍匯入；e2e 涵蓋匯入、編輯、排程（2026-10-01 完成）  |
-| 2 讀者公開頁 ✅ | 最新、搜尋、作品頁、目錄、閱讀器（先不檢查額度）、自動產生文字封面                  | 對照 A3 原型、桌面與手機一致；以真實 29 部書驗證（2026-10-01 完成）  |
-| 3 帳號與同步    | Email 與 Google 登入（Apple 延後到上線後）、偏好設定、書架、閱讀進度、閱讀紀錄      | 兩台裝置之間能同步                                                   |
-| 4 額度與防爬    | 訪客辨識（Cookie＋IP＋瀏覽器特徵）、額度視窗、頻率限制、後台額度設定                | 額度邏輯有單元測試覆蓋各種邊界情況                                   |
-| 5 上線準備      | 法務頁面、SEO、錯誤監控、備份、選定主機並部署                                       | 上線檢查清單全部完成                                                 |
+| 階段            | 內容                                                                                | 完成條件                                                               |
+| --------------- | ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 0 基礎建設 ✅   | Next.js 專案、Docker Compose、Drizzle、Auth.js 骨架、lint、測試、CI、`.env.example` | `pnpm check` 全部通過；`docker compose up` 能啟動（2026-10-01 完成）   |
+| 1 內容與後台 ✅ | 資料表、後台作品與章節管理、EPUB 匯入、排程                                         | 全部 29 部真實書籍匯入；e2e 涵蓋匯入、編輯、排程（2026-10-01 完成）    |
+| 2 讀者公開頁 ✅ | 最新、搜尋、作品頁、目錄、閱讀器（先不檢查額度）、自動產生文字封面                  | 對照 A3 原型、桌面與手機一致；以真實 29 部書驗證（2026-10-01 完成）    |
+| 3 帳號與同步 ✅ | Email 與 Google 登入（Apple 延後到上線後）、偏好設定、書架、閱讀進度、閱讀紀錄      | 桌面與手機 e2e 驗證兩個瀏覽器情境可同步（2026-10-02 完成）             |
+| 4 額度與防爬 ✅ | 訪客辨識（Cookie＋IP＋瀏覽器特徵）、額度視窗、頻率限制、後台額度設定                | 桌面與手機 e2e 驗證 10／50 額度、重讀與公告不扣額度（2026-10-02 完成） |
+| 5 上線準備      | 法務頁面、SEO、錯誤監控、備份、選定主機並部署                                       | 上線檢查清單全部完成                                                   |
 
 第二階段（看流量再決定）：評論與檢舉審核、會員與金流、廣告、App。
 

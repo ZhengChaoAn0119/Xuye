@@ -38,6 +38,12 @@ async function EditChapterPageContent({ params }: PageProps<"/admin/chapters/[id
             發布時間 {formatDateTime(chapter.publishAt)}・{formatNumber(chapter.wordCount)} 字
           </p>
         </div>
+        <Link
+          href={`/works/${chapter.workId}/chapters/${chapter.position}`}
+          className={styles.button}
+        >
+          預覽公開章節
+        </Link>
       </div>
       <section className={styles.panel}>
         <ChapterForm
@@ -52,6 +58,7 @@ async function EditChapterPageContent({ params }: PageProps<"/admin/chapters/[id
           }}
           isEdit
           submitLabel="儲存章節"
+          cancelHref={`/admin/works/${String(chapter.workId)}`}
         />
       </section>
     </>

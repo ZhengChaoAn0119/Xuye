@@ -33,6 +33,8 @@ Use the project-memory documents only when relevant:
 
 Setup: `cp .env.example .env` (set `AUTH_SECRET` with `pnpm dlx auth secret`), then `pnpm install`, `docker compose up -d db mailpit`, `pnpm db:migrate`, `pnpm dev`. Sign-in emails appear in Mailpit at http://localhost:8025.
 
+In the managed Codex Windows sandbox, dot-source `. .\scripts\enable-codex-shell.ps1` before pnpm commands. It works around Node 24 `os.userInfo()` failing under the restricted token and exposes the repository-pinned pnpm through Corepack; it is not needed in a normal terminal or CI.
+
 | Command | Purpose |
 |---|---|
 | `pnpm check` | lint, format check, typecheck, and unit tests. Must pass before every commit. |

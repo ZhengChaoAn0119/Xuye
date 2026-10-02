@@ -59,8 +59,21 @@
   --reader-width: 720px;
 }
 
-/* Alternate A3 palette derived from the A2 study: colors only, A3 layout unchanged. */
-:root[data-palette="alt"] {
+/* A1/A2 contribute colors only; every option keeps the production A3 layout. */
+:root[data-palette="a1"] {
+  --bg: #f4efe6;
+  --surface: #fffaf1;
+  --surface-2: #ece3d6;
+  --ink: #29231d;
+  --muted: #776e62;
+  --line: #ddd0bf;
+  --brand: #536756;
+  --brand-ink: #ffffff;
+  --accent: #536756;
+  --soft: #eee1cf;
+}
+
+:root[data-palette="a2"] {
   --bg: #f5f6f8;
   --surface: #ffffff;
   --surface-2: #e9ebef;

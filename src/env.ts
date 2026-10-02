@@ -11,6 +11,10 @@ const serverEnvSchema = z
     NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
     DATABASE_URL: z.url({ protocol: /^postgres(ql)?$/, error: "必須是 postgres:// 連線字串" }),
     AUTH_SECRET: z.string().min(32, "至少 32 字元；可用 `pnpm dlx auth secret` 產生"),
+    VISITOR_ID_SECRET: z.preprocess(
+      (v) => (v === "" ? undefined : v),
+      z.string().min(32, "至少 32 字元").optional(),
+    ),
     AUTH_URL: z.preprocess((v) => (v === "" ? undefined : v), z.url().optional()),
     AUTH_GOOGLE_ID: optionalString,
     AUTH_GOOGLE_SECRET: optionalString,

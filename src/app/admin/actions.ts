@@ -8,6 +8,7 @@ import { tagsForWork } from "@/server/cache-tags";
 import { chapterInputSchema, workUpdateSchema } from "@/server/content/schemas";
 import { getDb } from "@/server/db";
 import { createChapter, updateChapter, updateWork } from "@/server/services/admin-content";
+import { saveQuotaSettings } from "@/server/services/quota";
 
 export type FormState = { ok?: boolean; message?: string; fieldErrors?: Record<string, string[]> };
 
@@ -58,4 +59,20 @@ export async function updateChapterAction(
   );
   invalidate(workId);
   return { ok: true, message: "已儲存章節" };
+}
+
+const quotaSettingsSchema = z.object({
+  visitor: z.coerce.number().int().min(1, "至少 1 章").max(10_000, "最多 10,000 章"),
+  free: z.coerce.number().int().min(1, "至少 1 章").max(10_000, "最多 10,000 章"),
+});
+
+export async function updateQuotaSettingsAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const user = await requireAdmin("/admin/quota");
+  const parsed = quotaSettingsSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { fieldErrors: fieldErrors(parsed.error) };
+  await saveQuotaSettings(getDb(), parsed.data, actorFor(user), new Date());
+  return { ok: true, message: "已儲存閱讀額度設定" };
 }

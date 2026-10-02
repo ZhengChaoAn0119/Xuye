@@ -12,6 +12,7 @@ export type WorkSummary = {
   status: "ongoing" | "completed";
   synopsis: string;
   hasSexual: boolean;
+  hasViolence: boolean;
   tags: string[];
   /** Visible story chapters (author notes excluded). */
   chapterCount: number;
@@ -21,6 +22,7 @@ export type WorkSummary = {
 };
 
 export type DirectoryEntry = {
+  id: number;
   position: number;
   title: string;
   kind: "chapter" | "note";
@@ -45,6 +47,7 @@ async function summarize(db: Database, now: Date, workIds?: number[]): Promise<W
         status: works.status,
         synopsis: works.synopsis,
         hasSexual: works.hasSexual,
+        hasViolence: works.hasViolence,
       })
       .from(works)
       .leftJoin(authors, eq(authors.id, works.authorId))
@@ -128,6 +131,7 @@ export async function getWorkDetail(db: Database, now: Date, workId: number) {
   if (!summary) return null;
   const directory: DirectoryEntry[] = await db
     .select({
+      id: chapters.id,
       position: chapters.position,
       title: chapters.title,
       kind: chapters.kind,

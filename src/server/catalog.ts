@@ -2,36 +2,29 @@ import "server-only";
 import { cacheLife, cacheTag } from "next/cache";
 import { cacheTags } from "./cache-tags";
 import { getDb } from "./db";
-import {
-  getChapterBody,
-  getWorkDetail,
-  listLatestWorks,
-  searchWorks,
-  type WorkSummary,
-} from "./services/catalog";
+import { getChapterBody, getWorkDetail, listLatestWorks, searchWorks } from "./services/catalog";
+import type { ReadIdentity } from "./services/quota";
+import { authorizeChapterRead } from "./services/quota";
 
 /**
  * Cached public reads. The "catalog" cacheLife (next.config.ts) is short so
  * scheduled chapters and CLI imports — which cannot invalidate tags — still
  * appear within about a minute. "now" is captured when an entry is filled.
  *
- * Works flagged for sexual content stay out of listings until the 18+
- * content preference ships (phase 3).
+ * Content-preference filtering happens per request outside this shared cache.
  */
-const listable = (works: WorkSummary[]) => works.filter((w) => !w.hasSexual);
-
 export async function getLatestWorks() {
   "use cache";
   cacheLife("catalog");
   cacheTag(cacheTags.works);
-  return listable(await listLatestWorks(getDb(), new Date()));
+  return listLatestWorks(getDb(), new Date());
 }
 
 export async function searchCatalog(query: string) {
   "use cache";
   cacheLife("catalog");
   cacheTag(cacheTags.works);
-  return listable(await searchWorks(getDb(), new Date(), query));
+  return searchWorks(getDb(), new Date(), query);
 }
 
 export async function getWork(workId: number) {
@@ -42,6 +35,23 @@ export async function getWork(workId: number) {
 }
 
 /** Never cached: chapter text is served per request (quota checks land here in phase 4). */
-export async function readChapterBody(workId: number, position: number) {
-  return getChapterBody(getDb(), new Date(), workId, position);
+export async function readChapterBody(
+  workId: number,
+  position: number,
+  chapterId: number,
+  kind: "chapter" | "note",
+  identity: ReadIdentity,
+) {
+  const now = new Date();
+  const authorization = await authorizeChapterRead(
+    getDb(),
+    identity,
+    chapterId,
+    now,
+    kind === "chapter",
+  );
+  if (!authorization.allowed) return { status: authorization.reason, authorization } as const;
+  const body = await getChapterBody(getDb(), now, workId, position);
+  if (body === null) return { status: "unavailable" } as const;
+  return { status: "ok", body, authorization } as const;
 }

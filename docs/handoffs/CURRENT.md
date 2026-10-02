@@ -1,10 +1,10 @@
 # Current handoff
 
-Updated: 2026-10-01 (Asia/Taipei)
+Updated: 2026-10-02 (Asia/Taipei)
 
 ## Current state
 
-- **Phases 0, 1, and 2 are complete.** Readers can browse and read the full local library (29 works, 5,460 chapters) at http://localhost:3000 with `pnpm dev`.
+- **Phases 0 through 4 are complete.** Readers can browse, read within rolling quotas, sign in, and synchronize preferences, bookshelf, progress, history, and bookmarks at http://localhost:3000 with `pnpm dev`.
 - Plan: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md`, including the new "Public reader site" section.
 - Pushed to `origin/main` on 2026-10-01. The first GitHub Actions run (#36880738989, commit `8292c11`) passed every job: "Lint, types, unit tests" (33 s), "Build and end-to-end tests" (84 s), and "Docker image builds" (72 s). Before pushing, the same three jobs were run locally from a clean clone, with no `.env`, and passed.
 
@@ -46,9 +46,84 @@ Updated: 2026-10-01 (Asia/Taipei)
 - Sitemap, canonical URLs, and `metadataBase` wait for the public domain (phase 5).
 - Reader prefs are per device until account sync (phase 3).
 
-## Next steps (phase 3: accounts and sync)
+## Previous Phase 3 scope (now implemented)
 
 1. Reader-facing sign-in page in A3 style (replacing the default Auth.js page) and an account page.
 2. `user_preferences` (reader settings, content flags, 18+ confirmation) synced with the localStorage prefs.
 3. Bookshelf, reading progress (scroll position), and history, with header links and "continue reading" on work pages.
 4. Google sign-in when the user provides credentials (Apple is deferred until after launch).
+
+## Phase 3 delivered (2026-10-02)
+
+- Added custom A3 sign-in, verification, error, and account pages. Email login uses the existing Mailpit flow; Google is conditionally displayed when credentials exist.
+- Added `user_preferences`, `bookshelf_items`, `reading_progress`, and `bookmarks`, plus birth date and age-verification fields on users. Migration: `drizzle/0004_fancy_jack_murdock.sql`.
+- Added authenticated `/api/v1/me/` routes and `reader-account` services for preferences, age verification, bookshelf, progress, history, and bookmarks.
+- Added `/library`, `/history`, and `/account`; the site navigation and work pages now expose save and continue-reading flows.
+- Reader settings sync between the database and `localStorage`; theme, size, font, line height, and page width apply before or immediately after paint. Reader pages persist chapter and scroll position and restore it across devices.
+- Content preference filtering now happens per request outside the shared catalog cache. Sexual and violence flags are handled independently.
+- Added Phase 3 unit and Playwright coverage in `reader-account.test.ts` and `tests/e2e/account.spec.ts`.
+
+### Verification
+
+- `pnpm check`: passed (69 unit tests).
+- `pnpm build`: passed; public and account routes retain Partial Prerendering.
+- `/signin`: rendered and visually inspected at 1440 px and Pixel 7 sizes; no overflow or layout issue found.
+- `pnpm test:e2e`: 24/24 passed against the production standalone build on desktop Chrome and Pixel 7. The suite used an isolated native PostgreSQL 18 cluster and Mailpit v1.31.3 because Docker Desktop could not start without virtualization.
+- Phase 3 targeted responsive rerun: 2/2 passed, including horizontal-overflow assertions for the work page, reader, library, history, and account page at both desktop and Pixel 7 sizes.
+
+## Phase 4 delivered (2026-10-02)
+
+- Added signed visitor identities plus HMAC-only IP and coarse browser-trait storage. Raw IP and trait values are not stored; the disclosure is available at `/privacy`.
+- Added `quota_settings`, `quota_windows`, `quota_charges`, `visitor_identities`, and PostgreSQL-backed `rate_limit_windows` in migration `drizzle/0005_tidy_goblin_queen.sql`.
+- Visitor and Free defaults are 10 and 50 story chapters per rolling 24 hours. Reloading/revisiting a charged chapter and reading author notes do not consume quota.
+- Added transaction-level serialization for concurrent charges, subject and shared-IP rate limits, recovery-time reader messaging, and Free quota status on `/account`.
+- Added `/admin/quota` with independent authorization and audit logging. Admins can adjust both chapter limits without a deploy.
+- Disabled prefetch on chapter links so framework navigation cannot charge before entry. The chapter body remains uncached and is fetched only after authorization.
+- Added `VISITOR_ID_SECRET` (optional in development, recommended separately in production), visitor trait API, privacy-policy page, and footer link.
+
+### Verification
+
+- `pnpm check`: passed (75 unit tests plus lint, Prettier, and typecheck).
+- `pnpm build`: passed; Proxy is included and reader-facing routes retain Partial Prerendering.
+- Targeted quota and reader E2E: 16/16 passed on desktop Chrome and Pixel 7.
+- Full `pnpm test:e2e`: 32/32 passed against the production standalone build on desktop Chrome and Pixel 7 using an isolated native PostgreSQL 18 cluster and Mailpit v1.31.3.
+
+## Next steps (phase 5: launch preparation)
+
+1. Choose the public domain and deployment target; add Cloudflare/WAF, canonical URLs, sitemap, and production monitoring/backups.
+2. Replace the privacy page's pre-launch contact placeholder with the public operator contact.
+3. Set production secrets (`AUTH_SECRET`, separate `VISITOR_ID_SECRET`) and production Email/Google OAuth credentials.
+4. Complete Docker Compose verification after host virtualization is enabled.
+
+## Navigation and UX audit fixes (2026-10-02)
+
+- Reworked the signed-in site header into a responsive account menu with account, conditional admin, and sign-out actions. The admin sidebar now marks the active section and provides return-to-site, account, and sign-out actions on desktop and mobile.
+- Added inline bookshelf removal, per-item and clear-all history removal, failure rollback, confirmation for clear-all, and undo through a new history restore API/service.
+- Moved end-of-chapter navigation inside the successful chapter-body state, so quota, rate-limit, unavailable, and content-gated views cannot imply that reading completed or expose next navigation.
+- Added public work/chapter previews, cancel links, and unsaved-change warnings to admin edit forms. Added recovery links to `/verify-request`, cancel to age verification, and library/history shortcuts to `/account`.
+- Added `tests/e2e/navigation.spec.ts`, covering visitor, reader, and admin entry/exit paths plus collection undo and admin unsaved-change behavior on desktop Chrome and Pixel 7.
+
+### Verification
+
+- `pnpm check`: passed (75 unit tests plus lint, Prettier, and typecheck).
+- `pnpm build`: passed with all expected routes and Partial Prerender shells.
+- Full production-build `pnpm test:e2e`: 40/40 passed on desktop Chrome and Pixel 7 against the isolated `xuye_e2e` database.
+- The computer-use browser inventory returned no available browser surfaces. Automated real-Chrome coverage passed, but a user-visible browser surface is still needed for the requested manual visual walkthrough.
+
+## Pre-Phase 5 UI and workflow adjustments (2026-10-02)
+
+- Added `docs/ISSUES.md` as the shared, categorized issue board for human, Claude, and Codex collaboration.
+- Kept the A3 production layout and added selectable A1, A2, and A3 color palettes. A3 remains the default; the selection applies before paint locally and synchronizes through account preferences. Migration: `drizzle/0006_condemned_frank_castle.sql`.
+- Removed decorative English from the Traditional Chinese reader UI. The typed `t()` message-catalog boundary remains in place for future `zh-Hans`, `en`, and `ja` catalogs.
+- Extracted the signed-in account menu into a client component. Outside pointer actions and Escape dismiss it; Escape also restores focus to the menu trigger.
+- Added a narrowly scoped managed-Codex Windows workaround for Node's sandbox-only `uv_os_get_passwd` failure. Normal developer shells, CI, installs, and production do not load it.
+- Changed the local Mailpit example to `smtp://127.0.0.1:1025` so Windows does not prefer an unavailable IPv6 listener.
+- Added the opt-in `E2E_EXTERNAL_SERVER=1` Playwright path. Normal CI remains unchanged; the option lets managed Windows runs use an explicitly isolated production server and receive a reliable Playwright exit code.
+
+### Verification
+
+- Created the local `xuye` development database and applied migrations 0001 through 0006 successfully; the isolated `xuye_e2e` database was rebuilt separately.
+- `pnpm check`: passed (lint, Prettier, typecheck, and 77 unit tests).
+- `pnpm build`: passed for the production standalone artifact.
+- Full production-build Playwright suite: 40/40 passed in 1.7 minutes on desktop Chrome and Pixel 7, including account synchronization, all-role navigation, outside-click menu dismissal, A1 palette synchronization, quota, privacy, reader, and admin flows.
+- Native computer-use and in-app browser inventories exposed no controllable browser surface. A visible Chrome window could be launched for the user, while automated UI validation remained in real Chrome through Playwright.

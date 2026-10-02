@@ -4,9 +4,13 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ChapterDirectory } from "@/components/chapter-directory";
 import { WorkCover } from "@/components/work-cover";
+import { WorkAccountActions } from "@/components/work-account-actions";
 import { t } from "@/i18n";
 import { formatDateTime, formatNumber } from "@/lib/format";
 import { getWork } from "@/server/catalog";
+import { getDb } from "@/server/db";
+import { getRequestReader } from "@/server/reader";
+import { contentAllowed, getWorkAccountState } from "@/server/services/reader-account";
 import styles from "./work.module.css";
 
 const parseId = (id: string) => (/^\d{1,9}$/.test(id) ? Number(id) : null);
@@ -26,13 +30,19 @@ export async function generateMetadata({ params }: PageProps<"/works/[id]">): Pr
     title: work.title,
     description,
     // canonical/openGraph URLs need metadataBase; added in phase 5 with the public domain.
-    robots: work.hasSexual ? { index: false } : undefined,
+    robots: work.hasSexual || work.hasViolence ? { index: false } : undefined,
   };
 }
 
 async function WorkDetail({ params }: Pick<PageProps<"/works/[id]">, "params">) {
   const work = await loadWork(params);
   if (!work) notFound();
+
+  const { user, preferences } = await getRequestReader();
+  const allowed = contentAllowed(work, preferences);
+  const accountState = user
+    ? await getWorkAccountState(getDb(), user.id, work.id)
+    : { saved: false, progress: null };
 
   const firstStory = work.directory.find((c) => c.kind === "chapter") ?? work.directory[0];
   const statusLabel = work.status === "completed" ? t("common.completed") : t("common.ongoing");
@@ -62,30 +72,30 @@ async function WorkDetail({ params }: Pick<PageProps<"/works/[id]">, "params">) 
             </ul>
           )}
           <p className={styles.synopsis}>{work.synopsis || t("work.noSynopsis")}</p>
-          {work.hasSexual ? (
+          {!allowed ? (
             <div className={styles.restricted} role="note">
               <strong>{t("work.restrictedTitle")}</strong>
-              <p>{t("work.restrictedBody")}</p>
+              <p>{t(user ? "work.restrictedReady" : "work.restrictedBody")}</p>
+              <Link
+                className={styles.secondary}
+                href={
+                  user
+                    ? "/account"
+                    : `/signin?callbackUrl=${encodeURIComponent(`/works/${work.id}`)}`
+                }
+              >
+                {user ? t("nav.account") : t("nav.signIn")}
+              </Link>
             </div>
           ) : (
-            <div className={styles.actions}>
-              {firstStory && (
-                <Link
-                  className={styles.primary}
-                  href={`/works/${work.id}/chapters/${firstStory.position}`}
-                >
-                  {t("work.startReading")}
-                </Link>
-              )}
-              {work.latestChapter && (
-                <Link
-                  className={styles.secondary}
-                  href={`/works/${work.id}/chapters/${work.latestChapter.position}`}
-                >
-                  {t("work.latestChapter")}
-                </Link>
-              )}
-            </div>
+            <WorkAccountActions
+              workId={work.id}
+              signedIn={Boolean(user)}
+              initialSaved={accountState.saved}
+              currentChapterPosition={accountState.progress?.currentChapterPosition ?? null}
+              startPosition={firstStory?.position ?? null}
+              latestPosition={work.latestChapter?.position ?? null}
+            />
           )}
         </div>
       </section>

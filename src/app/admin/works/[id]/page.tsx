@@ -34,12 +34,17 @@ async function AdminWorkPageContent({ params }: PageProps<"/admin/works/[id]">) 
             {formatDateTime(work.updatedAt)}
           </p>
         </div>
-        <Link
-          href={`/admin/works/${work.id}/chapters/new`}
-          className={`${styles.button} ${styles.primary}`}
-        >
-          新增章節
-        </Link>
+        <div className={styles.actions}>
+          <Link href={`/works/${work.id}`} className={styles.button}>
+            預覽公開頁面
+          </Link>
+          <Link
+            href={`/admin/works/${work.id}/chapters/new`}
+            className={`${styles.button} ${styles.primary}`}
+          >
+            新增章節
+          </Link>
+        </div>
       </div>
 
       <section className={styles.panel}>

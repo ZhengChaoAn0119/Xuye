@@ -1,0 +1,36 @@
+.actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.primary,
+.button,
+.saved {
+  min-height: var(--control-height);
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-control);
+  font-weight: 800;
+}
+
+.primary {
+  border: 1px solid var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+}
+
+.button,
+.saved {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.saved {
+  border-color: var(--brand);
+  background: var(--soft);
+  color: var(--brand);
+}

@@ -46,8 +46,43 @@
   color: var(--ink);
 }
 
-.user {
+.navLinkActive {
+  background: var(--soft);
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.sidebarUtility {
   margin-top: auto;
+  padding-top: 14px;
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.sidebarUtility > a,
+.navButton {
+  padding: 7px 10px;
+  border-radius: var(--radius-control);
+  color: var(--muted);
+  text-align: left;
+}
+
+.sidebarUtility > a:hover,
+.navButton:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+.navButton {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.user {
   padding: 10px;
   font-size: 12px;
   color: var(--muted);
@@ -351,5 +386,13 @@
 
   .user {
     display: none;
+  }
+
+  .sidebarUtility {
+    margin-top: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    border-top: 0;
   }
 }

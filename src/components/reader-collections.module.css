@@ -1,0 +1,143 @@
+.filters,
+.actions {
+  margin: 22px 0 14px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.filters button,
+.actions button,
+.rowActions button {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  cursor: pointer;
+}
+
+.filters .active {
+  border-color: var(--brand);
+  background: var(--soft);
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.actions {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.count {
+  margin: 22px 0 14px;
+  color: var(--muted);
+}
+
+.list {
+  border-top: 1px solid var(--line);
+}
+
+.row {
+  padding: 14px 0;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.cover {
+  width: 48px;
+  overflow: hidden;
+}
+
+.copy h2 {
+  margin: 0;
+  font-size: 17px;
+}
+
+.copy p,
+.copy time,
+.copy span {
+  display: block;
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.copy span {
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.continue {
+  min-height: 38px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--brand);
+  border-radius: var(--radius-control);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.rowActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.feedback {
+  margin: 14px 0;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--soft);
+}
+
+.feedback button {
+  border: 0;
+  background: transparent;
+  color: var(--brand);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.empty {
+  margin-top: 28px;
+  padding: 56px 20px;
+  border: 1px dashed var(--line);
+  text-align: center;
+}
+
+.empty h2 {
+  margin: 0;
+}
+
+.empty p {
+  color: var(--muted);
+}
+
+.empty a {
+  color: var(--brand);
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 48px minmax(0, 1fr);
+  }
+
+  .continue,
+  .rowActions {
+    grid-column: 1 / -1;
+    justify-content: center;
+  }
+}

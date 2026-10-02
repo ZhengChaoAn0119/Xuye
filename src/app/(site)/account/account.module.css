@@ -1,0 +1,125 @@
+.page {
+  max-width: var(--content);
+  margin: 0 auto;
+  padding: 34px var(--gutter) 30px;
+}
+
+.head p {
+  margin: 0 0 8px;
+  color: var(--brand);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.head h1 {
+  margin: 0;
+  font-size: clamp(28px, 3.6vw, 40px);
+}
+
+.layout {
+  margin-top: 26px;
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.profile,
+.overview {
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.profile {
+  position: sticky;
+  top: 126px;
+}
+
+.avatar {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.profile h2 {
+  margin: 14px 0 4px;
+  overflow-wrap: anywhere;
+}
+
+.profile p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.profile strong {
+  color: var(--brand);
+  font-size: 13px;
+}
+
+.content {
+  display: grid;
+  gap: 18px;
+}
+
+.overview h2 {
+  margin: 0 0 16px;
+  font-size: 18px;
+}
+
+.overview dl,
+.overview div {
+  margin: 0;
+}
+
+.overview div {
+  padding: 12px 0;
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.overview dt {
+  color: var(--muted);
+}
+
+.overview dd {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.overview .quickLinks {
+  display: flex;
+  grid-template-columns: none;
+  gap: 10px;
+}
+
+.quickLinks a {
+  padding: 9px 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  color: var(--brand);
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .profile {
+    position: static;
+  }
+}

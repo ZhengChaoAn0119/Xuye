@@ -5,6 +5,8 @@ import { WorksBrowser } from "@/components/works-browser";
 import { t } from "@/i18n";
 import { toWorkCard } from "@/lib/work-card";
 import { searchCatalog } from "@/server/catalog";
+import { getRequestReader } from "@/server/reader";
+import { contentAllowed } from "@/server/services/reader-account";
 import styles from "../site.module.css";
 
 export const metadata: Metadata = {
@@ -35,17 +37,18 @@ async function SearchForm({ searchParams }: Pick<PageProps<"/search">, "searchPa
 
 async function SearchResults({ searchParams }: Pick<PageProps<"/search">, "searchParams">) {
   const query = queryOf((await searchParams).q);
-  const works = await searchCatalog(query);
+  const [works, { preferences }] = await Promise.all([searchCatalog(query), getRequestReader()]);
+  const visible = works.filter((work) => contentAllowed(work, preferences));
   return (
     <>
       <div className={styles.resultsHead}>
         <h2>{query ? t("search.resultsFor", { query }) : t("search.allWorks")}</h2>
-        <span className={styles.count}>{t("search.count", { count: works.length })}</span>
+        <span className={styles.count}>{t("search.count", { count: visible.length })}</span>
       </div>
-      {works.length === 0 ? (
+      {visible.length === 0 ? (
         <p className={styles.center}>{t("search.empty")}</p>
       ) : (
-        <WorksBrowser works={works.map(toWorkCard)} />
+        <WorksBrowser works={visible.map(toWorkCard)} />
       )}
     </>
   );

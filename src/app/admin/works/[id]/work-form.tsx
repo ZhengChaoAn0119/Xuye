@@ -1,9 +1,11 @@
 "use client";
 
-import { useActionState } from "react";
+import Link from "next/link";
+import { useActionState, useEffect } from "react";
 import { updateWorkAction, type FormState } from "../../actions";
 import styles from "../../admin.module.css";
 import { FieldError, FormNotice } from "../../form-status";
+import { useUnsavedChanges } from "../../use-unsaved-changes";
 
 type WorkFormProps = {
   workId: number;
@@ -23,8 +25,12 @@ export function WorkForm({ workId, defaults }: WorkFormProps) {
     updateWorkAction.bind(null, workId),
     {},
   );
+  const { markDirty, markClean } = useUnsavedChanges();
+  useEffect(() => {
+    if (state.ok) markClean();
+  }, [markClean, state.ok]);
   return (
-    <form action={action} className={styles.form}>
+    <form action={action} className={styles.form} onChange={markDirty}>
       <FormNotice state={state} />
       <div className={styles.row}>
         <div className={styles.field}>
@@ -96,6 +102,9 @@ export function WorkForm({ workId, defaults }: WorkFormProps) {
         <button type="submit" className={`${styles.button} ${styles.primary}`} disabled={pending}>
           {pending ? "儲存中…" : "儲存作品資料"}
         </button>
+        <Link className={styles.button} href="/admin/works">
+          取消
+        </Link>
       </div>
     </form>
   );

@@ -24,10 +24,10 @@ async function waitForMagicLink(request: APIRequestContext, email: string): Prom
 
 /** Sign in through the real email magic-link flow (Mailpit). */
 export async function signIn(page: Page, email: string) {
-  await page.goto("/api/auth/signin");
-  await page.getByRole("textbox", { name: /email/i }).fill(email);
-  await page.getByRole("button", { name: /sign in with/i }).click();
-  await expect(page).toHaveURL(/\/api\/auth\/verify-request/);
+  await page.goto("/signin");
+  await page.getByLabel("電子郵件").fill(email);
+  await page.getByRole("button", { name: "寄送登入連結" }).click();
+  await expect(page).toHaveURL(/\/verify-request/);
   await page.goto(await waitForMagicLink(page.request, email));
 }
 

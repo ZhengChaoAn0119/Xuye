@@ -29,6 +29,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth((): NextAuthConfig =
       verificationTokensTable: verificationTokens,
     }),
     session: { strategy: "database" },
+    pages: {
+      signIn: "/signin",
+      verifyRequest: "/verify-request",
+      error: "/auth-error",
+    },
     providers: configuredProviders(env),
     callbacks: {
       session({ session, user }) {

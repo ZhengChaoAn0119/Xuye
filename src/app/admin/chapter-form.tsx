@@ -1,9 +1,12 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import Link from "next/link";
+import type { Route } from "next";
+import { useActionState, useEffect, useState } from "react";
 import type { FormState } from "./actions";
 import styles from "./admin.module.css";
 import { FieldError, FormNotice } from "./form-status";
+import { useUnsavedChanges } from "./use-unsaved-changes";
 
 type Mode = "now" | "schedule" | "draft" | "hidden" | "keep";
 
@@ -13,6 +16,7 @@ type ChapterFormProps = {
   /** Edit forms offer "keep current state"; new chapters default to publishing now. */
   isEdit: boolean;
   submitLabel: string;
+  cancelHref: string;
 };
 
 const modeLabels: Record<Mode, string> = {
@@ -23,15 +27,25 @@ const modeLabels: Record<Mode, string> = {
   hidden: "隱藏",
 };
 
-export function ChapterForm({ action, defaults, isEdit, submitLabel }: ChapterFormProps) {
+export function ChapterForm({
+  action,
+  defaults,
+  isEdit,
+  submitLabel,
+  cancelHref,
+}: ChapterFormProps) {
   const [state, formAction, pending] = useActionState(action, {});
   const [mode, setMode] = useState<Mode>(isEdit ? "keep" : "now");
   const modes: Mode[] = isEdit
     ? ["keep", "now", "schedule", "draft", "hidden"]
     : ["now", "schedule", "draft"];
+  const { markDirty, markClean } = useUnsavedChanges();
+  useEffect(() => {
+    if (state.ok) markClean();
+  }, [markClean, state.ok]);
 
   return (
-    <form action={formAction} className={styles.form}>
+    <form action={formAction} className={styles.form} onChange={markDirty}>
       <FormNotice state={state} />
       <div className={styles.row}>
         <div className={styles.field}>
@@ -102,6 +116,9 @@ export function ChapterForm({ action, defaults, isEdit, submitLabel }: ChapterFo
         <button type="submit" className={`${styles.button} ${styles.primary}`} disabled={pending}>
           {pending ? "處理中…" : submitLabel}
         </button>
+        <Link className={styles.button} href={cancelHref as Route}>
+          取消
+        </Link>
       </div>
     </form>
   );

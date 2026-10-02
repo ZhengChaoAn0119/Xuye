@@ -3,6 +3,7 @@ import { e2eDatabaseUrl } from "./tests/e2e/env";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
 const baseURL = `http://localhost:${PORT}`;
+const usesExternalServer = process.env.E2E_EXTERNAL_SERVER === "1";
 // Locally use the installed Chrome; CI uses Playwright's Chromium. PW_CHANNEL overrides.
 const channel = process.env.PW_CHANNEL ?? (process.env.CI ? undefined : "chrome");
 
@@ -21,18 +22,20 @@ export default defineConfig({
     { name: "desktop", use: { ...devices["Desktop Chrome"], channel } },
     { name: "mobile", use: { ...devices["Pixel 7"], channel } },
   ],
-  webServer: {
-    command: `pnpm e2e:prepare && ${process.env.CI ? "pnpm start" : `pnpm dev --port ${PORT}`}`,
-    url: `${baseURL}/api/v1/health`,
-    env: {
-      PORT: String(PORT),
-      HOSTNAME: "localhost",
-      AUTH_URL: baseURL,
-      DATABASE_URL: e2eDatabaseUrl(),
-      E2E_DATABASE_URL: e2eDatabaseUrl(),
-    },
-    // Never reuse a server: it might be pointed at the development database.
-    reuseExistingServer: false,
-    timeout: 180_000,
-  },
+  webServer: usesExternalServer
+    ? undefined
+    : {
+        command: `pnpm e2e:prepare && ${process.env.CI ? "pnpm start" : `pnpm dev --port ${PORT}`}`,
+        url: `${baseURL}/api/v1/health`,
+        env: {
+          PORT: String(PORT),
+          HOSTNAME: "localhost",
+          AUTH_URL: baseURL,
+          DATABASE_URL: e2eDatabaseUrl(),
+          E2E_DATABASE_URL: e2eDatabaseUrl(),
+        },
+        // Never reuse a server: it might be pointed at the development database.
+        reuseExistingServer: false,
+        timeout: 180_000,
+      },
 });

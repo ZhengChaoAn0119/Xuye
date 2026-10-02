@@ -1,11 +1,23 @@
 import type { AdapterAccountType } from "next-auth/adapters";
-import { integer, pgEnum, pgTable, primaryKey, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  boolean,
+  date,
+  integer,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
 
 // Property names follow what @auth/drizzle-adapter expects; column names are snake_case.
 
 export const userRole = pgEnum("user_role", ["reader", "admin"]);
 // Paid tiers are added later with ALTER TYPE ... ADD VALUE (see docs/DECISIONS.md).
 export const userTier = pgEnum("user_tier", ["free"]);
+export const readerTheme = pgEnum("reader_theme", ["sepia", "white", "dark"]);
+export const readerFont = pgEnum("reader_font", ["serif", "sans"]);
+export const sitePalette = pgEnum("site_palette", ["a1", "a2", "a3"]);
 
 export const users = pgTable("users", {
   id: text("id")
@@ -17,8 +29,26 @@ export const users = pgTable("users", {
   image: text("image"),
   role: userRole("role").notNull().default("reader"),
   tier: userTier("tier").notNull().default("free"),
+  birthDate: date("birth_date"),
+  ageVerifiedAt: timestamp("age_verified_at", { mode: "date", withTimezone: true }),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   suspendedAt: timestamp("suspended_at", { mode: "date", withTimezone: true }),
+});
+
+export const userPreferences = pgTable("user_preferences", {
+  userId: text("user_id")
+    .primaryKey()
+    .references(() => users.id, { onDelete: "cascade" }),
+  readerFontSize: integer("reader_font_size").notNull().default(19),
+  readerTheme: readerTheme("reader_theme").notNull().default("sepia"),
+  readerFont: readerFont("reader_font").notNull().default("serif"),
+  sitePalette: sitePalette("site_palette").notNull().default("a3"),
+  lineHeight: integer("line_height").notNull().default(205),
+  pageWidth: integer("page_width").notNull().default(720),
+  showSexual: boolean("show_sexual").notNull().default(false),
+  showViolence: boolean("show_violence").notNull().default(false),
+  showBadge: boolean("show_badge").notNull().default(true),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
 });
 
 export const accounts = pgTable(

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { t } from "@/i18n";
 import { getCurrentUser } from "@/server/authz";
+import { AccountMenu } from "./account-menu";
 import styles from "./site-header.module.css";
 import { SiteNav } from "./site-nav";
 
@@ -11,29 +12,12 @@ async function AccountSlot() {
   // never be prefetched by <Link> (prefetching sign-out could end the session).
   if (!user) {
     return (
-      // eslint-disable-next-line @next/next/no-html-link-for-pages
-      <a className={styles.account} href="/api/auth/signin">
+      <a className={styles.account} href="/signin">
         {t("nav.signIn")}
       </a>
     );
   }
-  const initial = (user.email ?? "?").slice(0, 1).toUpperCase();
-  return (
-    <div className={styles.accountMenu}>
-      <span className={styles.avatar} title={user.email ?? undefined} aria-hidden="true">
-        {initial}
-      </span>
-      {user.role === "admin" && (
-        <Link className={styles.account} href="/admin">
-          {t("nav.admin")}
-        </Link>
-      )}
-      {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
-      <a className={styles.account} href="/api/auth/signout">
-        {t("nav.signOut")}
-      </a>
-    </div>
-  );
+  return <AccountMenu email={user.email} isAdmin={user.role === "admin"} />;
 }
 
 export function SiteHeader() {
@@ -62,7 +46,12 @@ export function SiteHeader() {
           <AccountSlot />
         </Suspense>
       </div>
-      <SiteNav label={t("a11y.mainNav")} latest={t("nav.latest")} />
+      <SiteNav
+        label={t("a11y.mainNav")}
+        latest={t("nav.latest")}
+        library={t("nav.library")}
+        history={t("nav.history")}
+      />
     </header>
   );
 }
@@ -72,7 +61,9 @@ export function SiteFooter() {
     <footer className={styles.footer}>
       <div className={styles.footerInner}>
         <span>{t("site.footer")}</span>
-        <span>{t("site.tagline")}</span>
+        <span>
+          {t("site.tagline")}・<Link href="/privacy">{t("site.privacy")}</Link>
+        </span>
       </div>
     </footer>
   );

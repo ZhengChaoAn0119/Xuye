@@ -1,0 +1,210 @@
+.stack {
+  display: grid;
+  gap: 18px;
+}
+
+.group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.group h2 {
+  margin: 0;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--line);
+  font-size: 18px;
+}
+
+.setting,
+.range {
+  min-height: 72px;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+}
+
+.setting:last-child,
+.range:last-child {
+  border-bottom: 0;
+}
+
+.setting small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.stepper,
+.segmented,
+.paletteChoices {
+  display: flex;
+  flex: none;
+}
+
+.stepper button,
+.stepper output,
+.segmented button,
+.paletteChoices button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.stepper button,
+.segmented button,
+.paletteChoices button {
+  cursor: pointer;
+}
+
+.stepper > :not(:first-child),
+.segmented > :not(:first-child),
+.paletteChoices > :not(:first-child) {
+  margin-left: -1px;
+}
+
+.segmented .active,
+.paletteChoices .active {
+  position: relative;
+  border-color: var(--brand);
+  background: var(--soft);
+  color: var(--brand);
+  font-weight: 800;
+}
+
+.paletteChoices button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.paletteSwatch {
+  width: 16px;
+  height: 16px;
+  border: 1px solid rgb(0 0 0 / 0.14);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--swatch-bg) 50%, var(--swatch-brand) 50%);
+}
+
+.a1 {
+  --swatch-bg: #f4efe6;
+  --swatch-brand: #536756;
+}
+
+.a2 {
+  --swatch-bg: #f5f6f8;
+  --swatch-brand: #5d73b6;
+}
+
+.a3 {
+  --swatch-bg: #f7f7f5;
+  --swatch-brand: #9b2335;
+}
+
+.range input {
+  flex: 1;
+  accent-color: var(--brand);
+}
+
+.range output {
+  min-width: 58px;
+  text-align: right;
+  color: var(--muted);
+}
+
+.toggle {
+  width: 46px;
+  height: 26px;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--radius-pill);
+  background: var(--surface-2);
+  cursor: pointer;
+}
+
+.toggle span {
+  display: block;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-cover);
+  transition: transform 0.18s;
+}
+
+.toggleOn {
+  background: var(--brand);
+}
+
+.toggleOn span {
+  transform: translateX(20px);
+}
+
+.ageForm {
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--soft);
+}
+
+.ageForm input,
+.ageForm button {
+  min-height: 38px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.ageForm input {
+  padding: 0 10px;
+  background: var(--surface);
+}
+
+.ageForm button {
+  padding: 0 14px;
+  border-color: var(--brand);
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 800;
+}
+
+.status {
+  min-height: 20px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+@media (max-width: 640px) {
+  .setting,
+  .range {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .range input {
+    width: 100%;
+  }
+
+  .paletteChoices {
+    width: 100%;
+  }
+
+  .paletteChoices button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .ageForm {
+    grid-template-columns: 1fr;
+  }
+}
