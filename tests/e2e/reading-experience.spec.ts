@@ -81,6 +81,33 @@ test("paged reading keeps chapter buttons and never loads ahead", async ({ page 
   await expect(page.getByRole("dialog", { name: "選擇閱讀方式" })).toBeHidden();
 });
 
+test("the reader's top bar leads to the work directory and the chapter list", async ({ page }) => {
+  await openChapterAndChoose(page, "翻頁閱讀");
+  const topBar = page.locator("header").first();
+
+  // The chapter title opens the in-reader table of contents.
+  await topBar.getByRole("button", { name: "第 1 章" }).click();
+  await expect(page.getByRole("navigation", { name: "目錄" })).toBeVisible();
+  await page.getByRole("button", { name: "關閉目錄" }).click();
+
+  // The book title goes to the work page's chapter directory.
+  await topBar.getByRole("link", { name: work.title }).click();
+  await expect(page).toHaveURL(new RegExp(`/works/${work.id}#directory$`));
+  const heading = page.getByRole("heading", { name: "章節目錄" });
+  await expect(heading).toBeInViewport();
+  // Scrolled to the directory (just below the sticky header) — or as far as this short test page goes.
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const top = document.getElementById("directory-heading")!.getBoundingClientRect().top;
+        const atBottom =
+          window.scrollY >= document.documentElement.scrollHeight - window.innerHeight - 2;
+        return top < 220 || (atBottom && window.scrollY > 0);
+      }),
+    )
+    .toBe(true);
+});
+
 test("continuous reading appends chapters at the end and follows them", async ({ page }) => {
   const requests = countChapterRequests(page);
   await openChapterAndChoose(page, "連續閱讀");

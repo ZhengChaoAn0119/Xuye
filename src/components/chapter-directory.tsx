@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
 import styles from "./chapter-directory.module.css";
 import { savePrefs } from "./reader-prefs";
@@ -16,11 +16,22 @@ export function ChapterDirectory({ workId, items }: { workId: number; items: Dir
   const setNewestFirst = (toggle: (value: boolean) => boolean) =>
     savePrefs({ directoryOrder: toggle(newestFirst) ? "newest" : "oldest" });
   const [expanded, setExpanded] = useState(false);
+  const sectionRef = useRef<HTMLElement>(null);
+
+  // The directory streams in after navigation, so a #directory link may arrive before it exists.
+  useEffect(() => {
+    if (window.location.hash === "#directory") sectionRef.current?.scrollIntoView();
+  }, []);
   const ordered = newestFirst ? [...items].reverse() : items;
   const shown = expanded ? ordered : ordered.slice(0, COLLAPSED);
 
   return (
-    <section aria-labelledby="directory-heading">
+    <section
+      ref={sectionRef}
+      id="directory"
+      className={styles.section}
+      aria-labelledby="directory-heading"
+    >
       <div className={styles.head}>
         <h2 id="directory-heading">{t("work.directory")}</h2>
         <button type="button" className={styles.sort} onClick={() => setNewestFirst((v) => !v)}>

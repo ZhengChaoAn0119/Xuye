@@ -1,3 +1,8 @@
+/* Linked from the reader's top bar (#directory); clear the sticky site header. */
+.section {
+  scroll-margin-top: 120px;
+}
+
 .head {
   display: flex;
   align-items: center;

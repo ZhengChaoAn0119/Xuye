@@ -83,6 +83,7 @@ const zhHant = {
     back: "返回作品頁",
     toc: "目錄",
     closeToc: "關閉目錄",
+    toWorkDirectory: "前往作品頁的章節目錄",
     prev: "上一章",
     next: "下一章",
     caughtUp: "已追到最新進度",

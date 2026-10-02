@@ -15,13 +15,35 @@
 
 .title {
   flex: 1;
+  min-width: 0;
   margin: 0;
-  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   font-weight: 800;
   font-size: 14px;
   white-space: nowrap;
+}
+
+/* Each half truncates on its own so both stay tappable on narrow screens. */
+.titleLink {
+  min-width: 0;
+  flex: 0 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 2px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.titleLink:hover,
+.titleLink:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .iconButton {

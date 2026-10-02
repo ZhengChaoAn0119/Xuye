@@ -82,6 +82,8 @@ export function ReaderChrome(props: ReaderChromeProps) {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ chapterId, bookmarked: nextValue }),
+      // The button already shows the new state; finish the save even if the reader navigates away.
+      keepalive: true,
     });
     if (!response.ok) setBookmarked(!nextValue);
   };
@@ -117,8 +119,24 @@ export function ReaderChrome(props: ReaderChromeProps) {
         <Link href={`/works/${workId}`} className={styles.iconButton} aria-label={t("reader.back")}>
           ←
         </Link>
+        {/* The book title leads to the work's chapter directory; the chapter title opens the TOC. */}
         <p className={styles.title}>
-          {workTitle}・{chapterTitle}
+          <Link
+            href={`/works/${workId}#directory`}
+            className={styles.titleLink}
+            title={t("reader.toWorkDirectory")}
+          >
+            {workTitle}
+          </Link>
+          <span aria-hidden="true">・</span>
+          <button
+            type="button"
+            className={styles.titleLink}
+            onClick={() => setTocOpen(true)}
+            title={t("reader.toc")}
+          >
+            {chapterTitle}
+          </button>
         </p>
         <button
           type="button"

@@ -23,6 +23,8 @@ export function WorkAccountActions(props: Props) {
       method: "PUT",
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ workId: props.workId, saved: next }),
+      // The button already shows the new state; finish the save even if the reader navigates away.
+      keepalive: true,
     });
     if (!response.ok) setSaved(!next);
   };

@@ -13,6 +13,12 @@ Updated: 2026-10-02 (Asia/Taipei)
 - Work happens on more than one machine and location; always `git pull` and run `pnpm install` plus `pnpm db:migrate` when resuming.
 - **Docker availability differs per machine.** The machine used for the 2026-10-02 Claude session (`E:\project\xuye`, Windows 11) runs Docker Desktop (server 29.4.1) with the `xuye-db-1` and `xuye-mailpit-1` compose services healthy, so Docker Compose verification can be done there. The machine used for the earlier Codex sessions could not start Docker Desktop (no virtualization) and used native PostgreSQL 18 plus Mailpit instead.
 
+## Reader top bar fix (2026-10-03, Claude)
+
+- UX-005: the reader top bar's book title now links to the work page's chapter directory (`/works/[id]#directory`) and the chapter title opens the TOC drawer. `ChapterDirectory` scrolls itself into view for `#directory` because it streams in after navigation.
+- Bookshelf/bookmark PUTs use `keepalive` so a save survives immediate navigation.
+- Verification: `pnpm check` (91 unit tests), production build, `pnpm test:e2e` 60/60 (twice, no flaky), real Chrome.
+
 ## Reading modes, quota grace, settings center (2026-10-02, Claude)
 
 Plan: `C:\Users\User\.claude\plans\rippling-purring-avalanche.md` (approved). Migrations **0008** (enums + prefs columns, `quota_charges.id`, `quota_settings.reread_grace_minutes`) and **0009** (drop `auto_next_chapter`) — split because drizzle-kit's rename prompt cannot run non-interactively. Run `pnpm db:migrate` after pulling.
