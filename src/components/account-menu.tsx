@@ -6,12 +6,21 @@ import { t } from "@/i18n";
 import styles from "./site-header.module.css";
 import { useDismissibleDetails } from "./use-dismissible-details";
 
-export function AccountMenu({ email, isAdmin }: { email: string | null; isAdmin: boolean }) {
+export function AccountMenu({
+  name,
+  email,
+  isAdmin,
+}: {
+  name: string;
+  email: string | null;
+  isAdmin: boolean;
+}) {
   const detailsRef = useDismissibleDetails();
-  const initial = (email ?? "?").slice(0, 1).toUpperCase();
+  const initial = ([...name][0] ?? "?").toUpperCase();
 
   return (
-    <details ref={detailsRef} className={styles.accountMenu}>
+    // A tap before hydration toggles the native open state; that is expected, not a mismatch.
+    <details ref={detailsRef} className={styles.accountMenu} suppressHydrationWarning>
       <summary className={styles.accountSummary} aria-label={t("nav.accountMenu")}>
         <span className={styles.avatar} title={email ?? undefined} aria-hidden="true">
           {initial}
@@ -20,9 +29,18 @@ export function AccountMenu({ email, isAdmin }: { email: string | null; isAdmin:
         <span aria-hidden="true">⌄</span>
       </summary>
       <div className={styles.accountDropdown}>
-        <span className={styles.accountEmail}>{email}</span>
+        <span className={styles.accountEmail}>
+          <strong>{name}</strong>
+          {email}
+        </span>
         <Link className={styles.account} href="/account">
-          {t("nav.account")}
+          {t("nav.profile")}
+        </Link>
+        <Link className={styles.account} href="/settings/content">
+          {t("nav.contentPrefs")}
+        </Link>
+        <Link className={styles.account} href="/settings">
+          {t("settings.title")}
         </Link>
         {isAdmin && (
           <Link className={styles.account} href="/admin">

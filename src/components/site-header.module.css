@@ -125,6 +125,13 @@
   background: var(--surface-2);
 }
 
+.accountEmail strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink);
+  font-size: 14px;
+}
+
 .accountEmail {
   padding: 8px 10px;
   border-bottom: 1px solid var(--line);

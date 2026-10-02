@@ -27,9 +27,27 @@ describe("normalizeReaderPreferences", () => {
     });
   });
 
-  it("auto-loads the next chapter unless the reader turned it off", () => {
-    expect(normalizeReaderPreferences({}).autoNextChapter).toBe(true);
-    expect(normalizeReaderPreferences({ autoNextChapter: false }).autoNextChapter).toBe(false);
+  it("leaves the reading mode unchosen and defaults the site and browsing settings", () => {
+    expect(normalizeReaderPreferences({})).toMatchObject({
+      readingMode: null,
+      siteTheme: "system",
+      worksView: "grid",
+      directoryOrder: "oldest",
+    });
+    expect(
+      normalizeReaderPreferences({
+        readingMode: "continuous",
+        siteTheme: "dark",
+        worksView: "list",
+        directoryOrder: "newest",
+      }),
+    ).toMatchObject({
+      readingMode: "continuous",
+      siteTheme: "dark",
+      worksView: "list",
+      directoryOrder: "newest",
+    });
+    expect(normalizeReaderPreferences({ readingMode: "scroll" as "paged" }).readingMode).toBeNull();
   });
 
   it("keeps sensitive content hidden by default", () => {

@@ -20,6 +20,19 @@ export type ReadIdentity = {
 
 export const DEFAULT_QUOTAS: Record<QuotaSubject, number> = { visitor: 10, free: 50 };
 export const QUOTA_WINDOW_HOURS = 24;
+/** Default minutes during which re-opening the same chapter is not charged again. */
+export const DEFAULT_REREAD_GRACE_MINUTES = 10;
+
+/**
+ * Every server fetch of a story chapter counts toward the daily allowance; only a repeat
+ * within the grace period after its last charge (reload, double click, back/forward) is free.
+ * The grace runs from the charge itself, so repeated reloads cannot extend it.
+ */
+export function withinRereadGrace(lastChargedAt: Date | null, now: Date, graceMinutes: number) {
+  if (!lastChargedAt || graceMinutes <= 0) return false;
+  const elapsed = now.getTime() - lastChargedAt.getTime();
+  return elapsed >= 0 && elapsed < graceMinutes * 60 * 1000;
+}
 export const RATE_LIMIT = {
   windowMinutes: 5,
   subjectRequests: 80,
@@ -68,6 +81,7 @@ async function setting(db: DbOrTx, subject: QuotaSubject) {
   return {
     chaptersPerWindow: row?.chaptersPerWindow ?? DEFAULT_QUOTAS[subject],
     windowHours: row?.windowHours ?? QUOTA_WINDOW_HOURS,
+    rereadGraceMinutes: row?.rereadGraceMinutes ?? DEFAULT_REREAD_GRACE_MINUTES,
   };
 }
 
@@ -91,17 +105,20 @@ export async function getQuotaStatus(
   db: Database,
   identity: ReadIdentity,
   now: Date,
-): Promise<QuotaSnapshot> {
+): Promise<QuotaSnapshot & { rereadGraceMinutes: number }> {
   const [config, current] = await Promise.all([
     setting(db, identity.subject),
     activeWindow(db, identity, now),
   ]);
-  return quotaSnapshot(
-    identity.subject,
-    config.chaptersPerWindow,
-    current?.used ?? 0,
-    current?.windowEnd ?? null,
-  );
+  return {
+    ...quotaSnapshot(
+      identity.subject,
+      config.chaptersPerWindow,
+      current?.used ?? 0,
+      current?.windowEnd ?? null,
+    ),
+    rereadGraceMinutes: config.rereadGraceMinutes,
+  };
 }
 
 async function noteVisitor(db: DbOrTx, identity: ReadIdentity, now: Date) {
@@ -190,12 +207,14 @@ export async function authorizeChapterRead(
       current = created!;
     }
 
-    const [existing] = await tx
-      .select({ chapterId: quotaCharges.chapterId })
+    const [latest] = await tx
+      .select({ chargedAt: quotaCharges.chargedAt })
       .from(quotaCharges)
       .where(and(eq(quotaCharges.windowId, current.id), eq(quotaCharges.chapterId, chapterId)))
+      .orderBy(desc(quotaCharges.chargedAt))
       .limit(1);
-    if (existing) return { allowed: true, charged: false, ...currentSnapshot() };
+    if (withinRereadGrace(latest?.chargedAt ?? null, now, config.rereadGraceMinutes))
+      return { allowed: true, charged: false, ...currentSnapshot() };
     if (current.used >= config.chaptersPerWindow) {
       return {
         allowed: false,
@@ -218,7 +237,7 @@ export async function authorizeChapterRead(
 
 export async function saveQuotaSettings(
   db: Database,
-  values: Record<QuotaSubject, number>,
+  values: Record<QuotaSubject, number> & { rereadGraceMinutes: number },
   actor: Actor,
   now: Date,
 ) {
@@ -230,11 +249,16 @@ export async function saveQuotaSettings(
           subject,
           chaptersPerWindow: values[subject],
           windowHours: QUOTA_WINDOW_HOURS,
+          rereadGraceMinutes: values.rereadGraceMinutes,
           updatedAt: now,
         })
         .onConflictDoUpdate({
           target: quotaSettings.subject,
-          set: { chaptersPerWindow: values[subject], updatedAt: now },
+          set: {
+            chaptersPerWindow: values[subject],
+            rereadGraceMinutes: values.rereadGraceMinutes,
+            updatedAt: now,
+          },
         });
     }
     await tx.insert(auditLogs).values({
@@ -251,8 +275,11 @@ export async function saveQuotaSettings(
 
 export async function getQuotaAdminOverview(db: Database, now: Date) {
   const rows = await db.select().from(quotaSettings);
-  const values = { ...DEFAULT_QUOTAS };
-  for (const row of rows) values[row.subject] = row.chaptersPerWindow;
+  const values = { ...DEFAULT_QUOTAS, rereadGraceMinutes: DEFAULT_REREAD_GRACE_MINUTES };
+  for (const row of rows) {
+    values[row.subject] = row.chaptersPerWindow;
+    values.rereadGraceMinutes = row.rereadGraceMinutes;
+  }
   const [{ visitors = 0 } = {}] = await db
     .select({ visitors: sql<number>`count(*)::int` })
     .from(visitorIdentities);

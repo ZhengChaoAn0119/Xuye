@@ -2,18 +2,23 @@
  * Design tokens. Values come from the A3 branch of prototype/styles.css (the
  * rendered values, i.e. the later "market-aligned" overrides).
  * Components use these variables only; no raw colors in component CSS.
+ *
+ * Light and dark site themes: every surface/ink token is light-dark(light, dark), and
+ * <html data-site-theme> picks the color-scheme (light, dark, or both = follow the system).
  */
 :root {
-  --bg: #f7f7f5;
-  --surface: #ffffff;
-  --surface-2: #eeeeeb;
-  --ink: #242322;
-  --muted: #74716e;
-  --line: #deded9;
-  --brand: #9b2335;
-  --brand-ink: #ffffff;
-  --accent: #9b2335;
-  --soft: #f4e9eb;
+  color-scheme: light dark;
+
+  --bg: light-dark(#f7f7f5, #16171a);
+  --surface: light-dark(#ffffff, #1f2024);
+  --surface-2: light-dark(#eeeeeb, #2a2b30);
+  --ink: light-dark(#242322, #ebe9e6);
+  --muted: light-dark(#74716e, #a6a29d);
+  --line: light-dark(#deded9, #36373c);
+  --brand: light-dark(#9b2335, #d9707f);
+  --brand-ink: light-dark(#ffffff, #16171a);
+  --accent: light-dark(#9b2335, #d9707f);
+  --soft: light-dark(#f4e9eb, #3a2429);
   --star: #e29a21;
   --medal: #d89d28;
 
@@ -26,15 +31,15 @@
   --cover-shade: rgb(10 10 10 / 0.6);
 
   /* Status colors (badges, notices) */
-  --ok-bg: #e3f1e6;
-  --ok-ink: #24663a;
-  --warn-bg: #fdf1d8;
-  --warn-ink: #7a5410;
-  --danger-bg: #f3e3e3;
-  --danger-ink: #8a2c2c;
+  --ok-bg: light-dark(#e3f1e6, #1e3325);
+  --ok-ink: light-dark(#24663a, #8fd1a1);
+  --warn-bg: light-dark(#fdf1d8, #3a2f17);
+  --warn-ink: light-dark(#7a5410, #e8c477);
+  --danger-bg: light-dark(#f3e3e3, #3b2020);
+  --danger-ink: light-dark(#8a2c2c, #f0a3a3);
 
-  --shadow-panel: 0 8px 24px rgba(22, 29, 45, 0.07);
-  --shadow-cover: 0 4px 12px rgba(15, 20, 30, 0.12);
+  --shadow-panel: 0 8px 24px light-dark(rgb(22 29 45 / 0.07), rgb(0 0 0 / 0.35));
+  --shadow-cover: 0 4px 12px light-dark(rgb(15 20 30 / 0.12), rgb(0 0 0 / 0.4));
 
   --radius: 6px;
   --radius-control: 3px;
@@ -71,33 +76,43 @@
   --swatch-a3-surface: #ffffff;
   --swatch-a3-brand: #9b2335;
   --swatch-a3-accent: #9b2335;
+  --swatch-border: rgb(0 0 0 / 0.14);
+}
+
+:root[data-site-theme="light"] {
+  color-scheme: light;
+}
+
+:root[data-site-theme="dark"] {
+  color-scheme: dark;
 }
 
 /* A1/A2 contribute colors only; every option keeps the production A3 layout. */
 :root[data-palette="a1"] {
-  --bg: #f4efe6;
-  --surface: #fffaf1;
-  --surface-2: #ece3d6;
-  --ink: #29231d;
-  --muted: #776e62;
-  --line: #ddd0bf;
-  --brand: #536756;
-  --brand-ink: #ffffff;
-  --accent: #536756;
-  --soft: #eee1cf;
+  --bg: light-dark(#f4efe6, #1b1915);
+  --surface: light-dark(#fffaf1, #25221d);
+  --surface-2: light-dark(#ece3d6, #312d26);
+  --ink: light-dark(#29231d, #ece4d6);
+  --muted: light-dark(#776e62, #aba192);
+  --line: light-dark(#ddd0bf, #3e3930);
+  --brand: light-dark(#536756, #93b597);
+  --brand-ink: light-dark(#ffffff, #141711);
+  --accent: light-dark(#536756, #93b597);
+  --soft: light-dark(#eee1cf, #2c3528);
 }
 
+/* A2's dark side follows the prototype's original dark A2 scheme. */
 :root[data-palette="a2"] {
-  --bg: #f5f6f8;
-  --surface: #ffffff;
-  --surface-2: #e9ebef;
-  --ink: #17191d;
-  --muted: #686e78;
-  --line: #d8dbe2;
-  --brand: #5d73b6;
-  --brand-ink: #ffffff;
-  --accent: #e84f76;
-  --soft: #edf0fa;
+  --bg: light-dark(#f5f6f8, #0d1018);
+  --surface: light-dark(#ffffff, #151a26);
+  --surface-2: light-dark(#e9ebef, #202636);
+  --ink: light-dark(#17191d, #edf0f8);
+  --muted: light-dark(#686e78, #99a3b7);
+  --line: light-dark(#d8dbe2, #30384a);
+  --brand: light-dark(#5d73b6, #8ea2e8);
+  --brand-ink: light-dark(#ffffff, #0d1018);
+  --accent: light-dark(#e84f76, #ff86a2);
+  --soft: light-dark(#edf0fa, #222a44);
 }
 
 @media (max-width: 640px) {

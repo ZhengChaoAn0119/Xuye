@@ -34,6 +34,21 @@ export async function signIn(page: Page, email: string) {
 export const uniqueTitle = (prefix: string) =>
   `${prefix} ${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
+/** Move a signed-in reader's quota charges into the past, e.g. beyond the reread grace. */
+export async function ageQuotaCharges(email: string, minutes: number) {
+  const sql = postgres(e2eDatabaseUrl(), { max: 1 });
+  try {
+    await sql`
+      update quota_charges set charged_at = charged_at - make_interval(mins => ${minutes})
+      where window_id in (
+        select w.id from quota_windows w join users u on w.subject_key = u.id
+        where w.subject = 'free' and u.email = ${email}
+      )`;
+  } finally {
+    await sql.end();
+  }
+}
+
 /** Grant admin directly in the E2E database (the CLI equivalent is `pnpm user:promote`). */
 export async function promoteToAdmin(email: string) {
   const sql = postgres(e2eDatabaseUrl(), { max: 1 });

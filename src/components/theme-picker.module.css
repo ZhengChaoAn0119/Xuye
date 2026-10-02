@@ -138,6 +138,34 @@
   font-size: 12px;
 }
 
+.modes {
+  margin-top: 12px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.modes button {
+  min-height: 34px;
+  border: 0;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.modes button + button {
+  border-left: 1px solid var(--line);
+}
+
+.modes button[aria-pressed="true"] {
+  background: var(--soft);
+  color: var(--brand);
+}
+
 .check {
   width: 16px;
   color: var(--brand);

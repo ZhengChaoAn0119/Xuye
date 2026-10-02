@@ -3,54 +3,45 @@
 import { useEffect, useState } from "react";
 import { t } from "@/i18n";
 import {
-  normalizePrefs,
-  PALETTE_EVENT,
-  READER_PREFS_KEY,
-  setLocalPalette,
+  loadPrefs,
+  PREFS_EVENT,
+  type ReaderPrefs,
+  setLocalPrefs,
   SITE_PALETTES,
-  type SitePalette,
+  SITE_THEMES,
+  syncPrefs,
 } from "./reader-prefs";
 import styles from "./theme-picker.module.css";
 import { useDismissibleDetails } from "./use-dismissible-details";
 
-function storedPalette(): SitePalette {
-  try {
-    return normalizePrefs(JSON.parse(localStorage.getItem(READER_PREFS_KEY) ?? "{}")).palette;
-  } catch {
-    return normalizePrefs(null).palette;
-  }
-}
-
-/** Header popover that switches the site palette for visitors and signed-in readers alike. */
+/** Header popover: site palette and light/dark/system, for visitors and signed-in readers alike. */
 export function ThemePicker({ signedIn }: { signedIn: boolean }) {
   const detailsRef = useDismissibleDetails();
-  const [palette, setPalette] = useState<SitePalette | null>(null);
+  const [prefs, setPrefs] = useState<ReaderPrefs | null>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- read device prefs after hydration
-    setPalette(storedPalette());
-    const onChange = (event: Event) => setPalette((event as CustomEvent<SitePalette>).detail);
-    window.addEventListener(PALETTE_EVENT, onChange);
-    return () => window.removeEventListener(PALETTE_EVENT, onChange);
+    setPrefs(loadPrefs());
+    const onChange = (event: Event) => setPrefs((event as CustomEvent<ReaderPrefs>).detail);
+    window.addEventListener(PREFS_EVENT, onChange);
+    return () => window.removeEventListener(PREFS_EVENT, onChange);
   }, []);
 
-  const choose = (next: SitePalette) => {
-    const previous = palette ?? storedPalette();
-    setLocalPalette(next);
-    if (!signedIn || next === previous) return;
-    void fetch("/api/v1/me/preferences", {
-      method: "PUT",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ sitePalette: next }),
-    }).then((response) => {
-      if (!response.ok) setLocalPalette(previous);
+  const choose = (patch: Partial<ReaderPrefs>) => {
+    const previous = loadPrefs();
+    setLocalPrefs(patch);
+    if (!signedIn) return;
+    void syncPrefs(patch).then((ok) => {
+      if (!ok) setLocalPrefs(previous);
     });
   };
 
+  const palette = prefs?.palette ?? "a3";
   return (
-    <details ref={detailsRef} className={styles.picker}>
+    // A tap before hydration toggles the native open state; that is expected, not a mismatch.
+    <details ref={detailsRef} className={styles.picker} suppressHydrationWarning>
       <summary className={styles.summary} aria-label={t("theme.open")}>
-        <span className={`${styles.chip} ${styles[palette ?? "a3"]}`} aria-hidden="true" />
+        <span className={`${styles.chip} ${styles[palette]}`} aria-hidden="true" />
         <span className={styles.label}>{t("theme.title")}</span>
       </summary>
       <div className={styles.dropdown}>
@@ -62,8 +53,8 @@ export function ThemePicker({ signedIn }: { signedIn: boolean }) {
               key={option}
               type="button"
               className={styles.option}
-              aria-pressed={palette === option}
-              onClick={() => choose(option)}
+              aria-pressed={prefs ? prefs.palette === option : undefined}
+              onClick={() => choose({ palette: option })}
             >
               <span className={`${styles.preview} ${styles[option]}`} aria-hidden="true">
                 <span />
@@ -75,8 +66,20 @@ export function ThemePicker({ signedIn }: { signedIn: boolean }) {
                 <small>{t(`theme.${option}Hint`)}</small>
               </span>
               <span className={styles.check} aria-hidden="true">
-                {palette === option ? "✓" : ""}
+                {prefs?.palette === option ? "✓" : ""}
               </span>
+            </button>
+          ))}
+        </div>
+        <div className={styles.modes} role="group" aria-label={t("theme.siteTheme")}>
+          {SITE_THEMES.map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              aria-pressed={prefs ? prefs.siteTheme === mode : undefined}
+              onClick={() => choose({ siteTheme: mode })}
+            >
+              {t(`theme.${mode}`)}
             </button>
           ))}
         </div>

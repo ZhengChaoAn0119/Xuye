@@ -17,7 +17,21 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: process.env.CI ? "github" : "list",
-  use: { baseURL, trace: "retain-on-failure" },
+  use: {
+    baseURL,
+    trace: "retain-on-failure",
+    // Readers who already picked paged reading, so the first-visit reading-mode prompt does not
+    // cover other flows; reading-experience.spec.ts clears this to exercise the prompt itself.
+    storageState: {
+      cookies: [],
+      origins: [
+        {
+          origin: baseURL,
+          localStorage: [{ name: "xuye:reader", value: JSON.stringify({ readingMode: "paged" }) }],
+        },
+      ],
+    },
+  },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"], channel } },
     { name: "mobile", use: { ...devices["Pixel 7"], channel } },

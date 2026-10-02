@@ -1,5 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { normalizePrefs, PREFS_BOOT_SCRIPT, READER_PREFS_KEY } from "./reader-prefs";
+import {
+  normalizePrefs,
+  PREFS_BOOT_SCRIPT,
+  READER_PREFS_KEY,
+  serverPatch,
+  SITE_BOOT_SCRIPT,
+} from "./reader-prefs";
+
+describe("SITE_BOOT_SCRIPT", () => {
+  function boot(stored: string | null) {
+    const dataset: Record<string, string> = {};
+    new Function("localStorage", "document", SITE_BOOT_SCRIPT)(
+      { getItem: (k: string) => (k === READER_PREFS_KEY ? stored : null) },
+      { documentElement: { dataset } },
+    );
+    return dataset;
+  }
+
+  it.each([[null], ['{"siteTheme":"dark","palette":"a1"}'], ['{"siteTheme":"neon"}']])(
+    "matches normalizePrefs for %s",
+    (stored) => {
+      const expected = normalizePrefs(JSON.parse(stored ?? "{}"));
+      expect(boot(stored)).toEqual({ palette: expected.palette, siteTheme: expected.siteTheme });
+    },
+  );
+});
+
+describe("serverPatch", () => {
+  it("maps device preference names to account fields and skips unchosen values", () => {
+    expect(serverPatch({ theme: "dark", size: 20, readingMode: null, siteTheme: "light" })).toEqual(
+      { readerTheme: "dark", readerFontSize: 20, siteTheme: "light" },
+    );
+  });
+});
 
 describe("normalizePrefs", () => {
   it("falls back to defaults for missing or invalid values", () => {
@@ -10,22 +43,22 @@ describe("normalizePrefs", () => {
       palette: "a3",
       lineHeight: 205,
       pageWidth: 720,
-      autoNext: true,
+      readingMode: null,
+      siteTheme: "system",
+      worksView: "grid",
+      directoryOrder: "oldest",
     });
-    expect(normalizePrefs({ theme: "neon", size: "big", autoNext: "no" })).toEqual({
-      theme: "sepia",
-      size: 19,
-      font: "serif",
-      palette: "a3",
-      lineHeight: 205,
-      pageWidth: 720,
-      autoNext: true,
-    });
+    expect(
+      normalizePrefs({ theme: "neon", size: "big", readingMode: "scroll", siteTheme: "neon" }),
+    ).toEqual(normalizePrefs(null));
   });
 
-  it("keeps auto-loading off only when explicitly disabled", () => {
-    expect(normalizePrefs({ autoNext: false }).autoNext).toBe(false);
-    expect(normalizePrefs({ autoNext: true }).autoNext).toBe(true);
+  it("leaves the reading mode unchosen until the reader picks one", () => {
+    expect(normalizePrefs({ readingMode: "continuous" }).readingMode).toBe("continuous");
+    expect(normalizePrefs({ readingMode: "paged" }).readingMode).toBe("paged");
+    // Older builds stored autoNext; only an explicit opt-out counts as choosing paged reading.
+    expect(normalizePrefs({ autoNext: false }).readingMode).toBe("paged");
+    expect(normalizePrefs({ autoNext: true }).readingMode).toBeNull();
   });
 
   it("clamps and rounds the font size", () => {

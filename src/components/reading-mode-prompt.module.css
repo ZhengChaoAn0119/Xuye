@@ -1,0 +1,108 @@
+.dialog {
+  width: min(560px, calc(100% - 32px));
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  box-shadow: var(--shadow-panel);
+}
+
+.dialog::backdrop {
+  background: var(--overlay);
+}
+
+.dialog h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.intro,
+.note {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.note {
+  margin: 14px 0 0;
+  font-size: 12px;
+}
+
+.options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.option {
+  padding: 16px;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover,
+.option:focus-visible {
+  border-color: var(--brand);
+  background: var(--soft);
+}
+
+.option strong {
+  font-size: 16px;
+}
+
+.option small {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+/* Two stacked "pages": side by side with an arrow gap (paged) or flowing into each other. */
+.figure {
+  width: 72px;
+  height: 52px;
+  margin-bottom: 4px;
+  display: flex;
+  gap: 8px;
+}
+
+.figure span {
+  flex: 1;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  background: repeating-linear-gradient(var(--surface-2) 0 3px, transparent 3px 8px);
+}
+
+.continuous {
+  flex-direction: column;
+  gap: 0;
+}
+
+.continuous span + span {
+  border-top-style: dashed;
+}
+
+.later {
+  margin-top: 12px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font: inherit;
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .options {
+    grid-template-columns: 1fr;
+  }
+}

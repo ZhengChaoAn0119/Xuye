@@ -83,11 +83,20 @@ test("account, bookshelf, progress, history, bookmarks, and preferences synchron
 
   await page.goto("/account");
   await expect(page.getByRole("heading", { level: 1, name: "我的" })).toBeVisible();
+  // The heading is a display name derived from the email, never the full address.
+  await expect(
+    page.getByRole("heading", { level: 2, name: email.slice(0, 4) + "…" }),
+  ).toBeVisible();
   await expectNoHorizontalOverflow(page);
-  await page.getByRole("button", { name: "深色" }).click();
-  await expect(page.getByText("已儲存")).toBeVisible();
+
+  await page.goto("/settings/reading");
+  await page.getByRole("group", { name: "閱讀背景" }).getByRole("button", { name: "深色" }).click();
+  await expect(page.getByText("已儲存", { exact: true })).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  await page.goto("/settings/appearance");
   await page.getByRole("button", { name: "紙頁" }).click();
   await expect(page.locator("html")).toHaveAttribute("data-palette", "a1");
+  await expect(page.getByText("已儲存", { exact: true })).toBeVisible();
 
   const secondContext = await browser.newContext();
   const secondPage = await secondContext.newPage();

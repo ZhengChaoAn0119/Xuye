@@ -3,13 +3,23 @@ import { notFound, redirect } from "next/navigation";
 import { auth } from "./auth";
 import type { Actor } from "./services/audit";
 
-export type CurrentUser = { id: string; email: string | null; role: "reader" | "admin" };
+export type CurrentUser = {
+  id: string;
+  email: string | null;
+  name: string | null;
+  role: "reader" | "admin";
+};
 
 /** The signed-in user, or null. Reads the session cookie (request-time). */
 export async function getCurrentUser(): Promise<CurrentUser | null> {
   const session = await auth();
   if (!session?.user?.id) return null;
-  return { id: session.user.id, email: session.user.email ?? null, role: session.user.role };
+  return {
+    id: session.user.id,
+    email: session.user.email ?? null,
+    name: session.user.name ?? null,
+    role: session.user.role,
+  };
 }
 
 export const actorFor = (user: CurrentUser): Actor => ({

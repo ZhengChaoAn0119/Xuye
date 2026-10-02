@@ -22,7 +22,11 @@ async function QuotaContent() {
       </div>
       <section className={styles.panel}>
         <h2 className={styles.panelTitle}>每 24 小時可讀章數</h2>
-        <QuotaForm visitor={overview.values.visitor} free={overview.values.free} />
+        <QuotaForm
+          visitor={overview.values.visitor}
+          free={overview.values.free}
+          rereadGraceMinutes={overview.values.rereadGraceMinutes}
+        />
       </section>
       <section className={styles.panel}>
         <h2 className={styles.panelTitle}>防止大量自動讀取</h2>

@@ -20,7 +20,10 @@ export const DEFAULT_READER_PREFERENCES = {
   sitePalette: "a3" as const,
   lineHeight: 205,
   pageWidth: 720,
-  autoNextChapter: true,
+  readingMode: null,
+  siteTheme: "system" as const,
+  worksView: "grid" as const,
+  directoryOrder: "oldest" as const,
   showSexual: false,
   showViolence: false,
   showBadge: true,
@@ -33,11 +36,23 @@ export type ReaderPreferences = {
   sitePalette: "a1" | "a2" | "a3";
   lineHeight: number;
   pageWidth: number;
-  autoNextChapter: boolean;
+  /** null until the reader chooses on first entering the reader. */
+  readingMode: ReadingMode | null;
+  siteTheme: "light" | "dark" | "system";
+  worksView: "grid" | "list";
+  directoryOrder: "oldest" | "newest";
   showSexual: boolean;
   showViolence: boolean;
   showBadge: boolean;
 };
+
+export type ReadingMode = "paged" | "continuous";
+
+const oneOf = <T extends string, F extends T | null>(
+  value: unknown,
+  options: readonly T[],
+  fallback: F,
+): T | F => (options.includes(value as T) ? (value as T) : fallback);
 
 const integerIn = (value: unknown, min: number, max: number, fallback: number) =>
   typeof value === "number" && Number.isFinite(value)
@@ -54,7 +69,10 @@ export function normalizeReaderPreferences(value: Partial<ReaderPreferences>): R
     sitePalette: ["a1", "a2", "a3"].includes(value.sitePalette ?? "") ? value.sitePalette! : "a3",
     lineHeight: integerIn(value.lineHeight, 150, 260, 205),
     pageWidth: integerIn(value.pageWidth, 560, 920, 720),
-    autoNextChapter: value.autoNextChapter !== false,
+    readingMode: oneOf(value.readingMode, ["paged", "continuous"] as const, null),
+    siteTheme: oneOf(value.siteTheme, ["light", "dark", "system"] as const, "system"),
+    worksView: oneOf(value.worksView, ["grid", "list"] as const, "grid"),
+    directoryOrder: oneOf(value.directoryOrder, ["oldest", "newest"] as const, "oldest"),
     showSexual: value.showSexual === true,
     showViolence: value.showViolence === true,
     showBadge: value.showBadge !== false,
@@ -337,6 +355,71 @@ export async function getChapterAccountState(
       .limit(1),
   ]);
   return { bookmarked: Boolean(bookmark), progress: progress ?? null };
+}
+
+/** Everything this service keeps about a reader, for the "download my data" request. */
+export async function exportAccountData(db: Database, userId: string, now: Date) {
+  const [profile, { preferences }, shelf, progress, marks] = await Promise.all([
+    getAccountProfile(db, userId),
+    getReaderPreferences(db, userId),
+    db
+      .select({
+        workId: bookshelfItems.workId,
+        title: works.title,
+        savedAt: bookshelfItems.createdAt,
+      })
+      .from(bookshelfItems)
+      .innerJoin(works, eq(works.id, bookshelfItems.workId))
+      .where(eq(bookshelfItems.userId, userId)),
+    db
+      .select({
+        workId: readingProgress.workId,
+        title: works.title,
+        currentChapter: readingProgress.currentChapterPosition,
+        furthestChapter: readingProgress.furthestChapterPosition,
+        updatedAt: readingProgress.updatedAt,
+        hiddenFromHistoryAt: readingProgress.hiddenFromHistoryAt,
+      })
+      .from(readingProgress)
+      .innerJoin(works, eq(works.id, readingProgress.workId))
+      .where(eq(readingProgress.userId, userId)),
+    db
+      .select({
+        workId: chapters.workId,
+        chapter: chapters.position,
+        title: chapters.title,
+        savedAt: bookmarks.createdAt,
+      })
+      .from(bookmarks)
+      .innerJoin(chapters, eq(chapters.id, bookmarks.chapterId))
+      .where(eq(bookmarks.userId, userId)),
+  ]);
+  return {
+    exportedAt: now.toISOString(),
+    profile,
+    preferences,
+    bookshelf: shelf,
+    readingProgress: progress,
+    bookmarks: marks,
+  };
+}
+
+/**
+ * Deletes a reader account. Preferences, bookshelf, progress, bookmarks, and sessions go with
+ * it (ON DELETE CASCADE); audit entries keep their label with a null actor. Quota windows are
+ * keyed by text and stay until they expire, so deleting and re-registering cannot reset quota.
+ * Admins cannot delete themselves here.
+ */
+export async function deleteAccount(db: Database, userId: string) {
+  const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId));
+  if (!user) return "not_found" as const;
+  if (user.role === "admin") return "admin" as const;
+  await db.delete(users).where(eq(users.id, userId));
+  return "deleted" as const;
+}
+
+export async function setDisplayName(db: Database, userId: string, name: string) {
+  await db.update(users).set({ name }).where(eq(users.id, userId));
 }
 
 export async function setBookmark(

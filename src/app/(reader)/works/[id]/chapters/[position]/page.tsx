@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ReaderChrome } from "@/components/reader-chrome";
 import { ReaderProgress } from "@/components/reader-progress";
+import { ReadingModePrompt } from "@/components/reading-mode-prompt";
 import { VisitorTraitReporter } from "@/components/visitor-trait-reporter";
 import { t } from "@/i18n";
 import { formatNumber } from "@/lib/format";
@@ -159,6 +160,7 @@ async function Reader({ params }: { params: Params }) {
         initialBookmarked={accountState.bookmarked}
       />
       {!user && <VisitorTraitReporter />}
+      <ReadingModePrompt signedIn={Boolean(user)} />
       <article className={styles.article} data-chapter-position={entry.position}>
         <header className={styles.header}>
           <p className={styles.meta}>

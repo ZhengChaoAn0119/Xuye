@@ -83,7 +83,7 @@ Bookmark        userId, chapterId, createdAt
 VisitorIdentity cookieId, ipHash, traitHash, firstSeenAt, lastSeenAt   IP／特徵只存 HMAC，不存原始資料
 QuotaSetting    subject(VISITOR|FREE|…), chaptersPerWindow, windowHours  後台可調整章數
 QuotaWindow     subjectKey, windowStart, windowEnd, used       視窗從第一次扣額度開始算 24 小時
-QuotaCharge     windowId, chapterId, chargedAt       unique(windowId, chapterId)：同一視窗內重讀同章不重複扣
+QuotaCharge     id, windowId, chapterId, chargedAt   每次計費一筆；寬限期內重開同章不新增（見 4.3）
 RateLimitWindow scope, key, windowStart, windowEnd, requests   PostgreSQL 短時請求計數
 ```
 
@@ -114,10 +114,13 @@ RateLimitWindow scope, key, windowStart, windowEnd, requests   PostgreSQL 短時
    - 已登入：以帳號為單位。
    - 訪客：簽章 Cookie + IP 雜湊 + 瀏覽器特徵雜湊。
 2. 找出或建立這個身分的 `QuotaWindow`。視窗已滿 24 小時就開新視窗。
-3. 這一章在本視窗內已扣過額度，就直接顯示；額度還有剩，就新增一筆 `QuotaCharge` 再顯示。
+3. 每次向伺服器請求章節內文都計入額度（額度限制的是每日瀏覽量，讀過不等於取得重讀權）。只有在同一章上次計費後的寬限期內（`quota_settings.reread_grace_minutes`，預設 10 分鐘，後台可調）重新開啟才不重複扣，涵蓋重新整理、連點、返回等誤觸；寬限期從計費當下起算，不因重讀延長。額度還有剩就新增一筆 `QuotaCharge` 再顯示（2026-10-02 起同一章可有多筆）。
 4. 額度用完：訪客與已登入使用者都只顯示額度恢復時間。**不設登入牆，也不提示註冊。** 已經載入的章節不會被中斷。
 5. 首版停用所有章節連結的框架預取，讀者真的進入時才扣額度。未來若啟用預載，只能載入目前章節的下一章，且進入前不得扣額度。
-6. 自動載入下一章（2026-10-02）：讀者自己操作（滾輪、觸控、按鍵、指標）捲到頁面最底時，才向 `GET /api/v1/works/[id]/chapters/[position]` 要下一章，這支 API 與開啟章節頁走同一套額度與頻率檢查。開頁、恢復閱讀位置等程式捲動都不會觸發；一次只接一章，額度用完就在串流尾端顯示恢復時間。讀者可在閱讀器工具列或「我的」關閉（`auto_next_chapter`，預設開啟）。
+6. 閱讀方式分兩種，讀者第一次進閱讀器時選擇（`user_preferences.reading_mode`，未選為 null；之後可在工具列 ⇣ 或「設定 › 閱讀」更改）：
+   - **翻頁**：章末有上一章／下一章，換頁才請求下一章。
+   - **連續**：讀者自己操作（滾輪、觸控、按鍵、指標）捲到頁面最底時，才向 `GET /api/v1/works/[id]/chapters/[position]` 要下一章；這支 API 與開啟章節頁走同一套額度與頻率檢查。開頁、恢復閱讀位置等程式捲動都不會觸發，一次只接一章，額度用完就在串流尾端顯示恢復時間。
+7. 連續閱讀的記憶體：離視野超過 2 個畫面高的章節換成等高佔位框（DOM 釋放、文字留在本頁），捲回時從本頁記憶體重新顯示、不請求伺服器、不扣額度。本頁最多保留 30 章文字；被釋放的章節只在讀者按「重新載入」時才請求，並依第 3 點計費。
 
 ### 4.4 防爬蟲
 

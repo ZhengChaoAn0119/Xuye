@@ -3,14 +3,15 @@
 import { useEffect } from "react";
 import type { ReaderPreferences } from "@/server/services/reader-account";
 import {
-  applyPrefs,
+  enableAccountSync,
+  loadPrefs,
   normalizePrefs,
-  PALETTE_EVENT,
-  READER_PREFS_KEY,
   type ReaderPrefs,
+  setLocalPrefs,
+  syncPrefs,
 } from "./reader-prefs";
 
-function localFromServer(preferences: ReaderPreferences): ReaderPrefs {
+export function localFromServer(preferences: ReaderPreferences): ReaderPrefs {
   return normalizePrefs({
     theme: preferences.readerTheme,
     size: preferences.readerFontSize,
@@ -18,22 +19,14 @@ function localFromServer(preferences: ReaderPreferences): ReaderPrefs {
     palette: preferences.sitePalette,
     lineHeight: preferences.lineHeight,
     pageWidth: preferences.pageWidth,
-    autoNext: preferences.autoNextChapter,
+    readingMode: preferences.readingMode,
+    siteTheme: preferences.siteTheme,
+    worksView: preferences.worksView,
+    directoryOrder: preferences.directoryOrder,
   });
 }
 
-function serverFromLocal(preferences: ReaderPrefs) {
-  return {
-    readerTheme: preferences.theme,
-    readerFontSize: preferences.size,
-    readerFont: preferences.font,
-    sitePalette: preferences.palette,
-    lineHeight: preferences.lineHeight,
-    pageWidth: preferences.pageWidth,
-    autoNextChapter: preferences.autoNext,
-  };
-}
-
+/** Signed-in readers: server preferences win; a first sign-in uploads this device's prefs. */
 export function AccountPreferenceSync({
   preferences,
   exists,
@@ -42,22 +35,19 @@ export function AccountPreferenceSync({
   exists: boolean;
 }) {
   useEffect(() => {
-    try {
-      if (exists) {
-        const local = localFromServer(preferences);
-        localStorage.setItem(READER_PREFS_KEY, JSON.stringify(local));
-        applyPrefs(local);
-        window.dispatchEvent(new CustomEvent(PALETTE_EVENT, { detail: local.palette }));
+    enableAccountSync();
+    if (exists) {
+      const server = localFromServer(preferences);
+      // A reading mode chosen on this device before signing in fills a server gap.
+      const local = loadPrefs();
+      if (server.readingMode === null && local.readingMode !== null) {
+        setLocalPrefs({ ...server, readingMode: local.readingMode });
+        void syncPrefs({ readingMode: local.readingMode });
       } else {
-        const local = normalizePrefs(JSON.parse(localStorage.getItem(READER_PREFS_KEY) ?? "{}"));
-        void fetch("/api/v1/me/preferences", {
-          method: "PUT",
-          headers: { "content-type": "application/json" },
-          body: JSON.stringify(serverFromLocal(local)),
-        });
+        setLocalPrefs(server);
       }
-    } catch {
-      // Private browsing or blocked storage: server preferences remain authoritative.
+    } else {
+      void syncPrefs(loadPrefs());
     }
   }, [exists, preferences]);
 

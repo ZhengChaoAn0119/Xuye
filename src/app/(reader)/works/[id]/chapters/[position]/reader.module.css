@@ -1,4 +1,6 @@
+/* Site tokens inside the reader (drawer, notices) follow the reader background, not the site theme. */
 .shell {
+  color-scheme: light;
   --reader-bg: var(--reader-sepia-bg);
   --reader-ink: var(--reader-sepia-ink);
   min-height: 100vh;
@@ -15,6 +17,7 @@
 }
 
 :global(html[data-reader-theme="dark"]) .shell {
+  color-scheme: dark;
   --reader-bg: var(--reader-dark-bg);
   --reader-ink: var(--reader-dark-ink);
 }
@@ -129,6 +132,11 @@
   font-family: var(--font-ui);
 }
 
+.endSlim {
+  margin-top: 40px;
+  padding: 14px 0 0;
+}
+
 .caughtUp {
   margin: 10px 0 0;
   font-size: 20px;
@@ -141,8 +149,47 @@
   margin-top: 16px;
 }
 
+/* Off-screen chapters skip layout and paint; "auto" remembers their last rendered size. */
+.article {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 3000px;
+}
+
 .stream > .article {
   padding-top: 0;
+}
+
+/* Continuous reading: pull the first appended chapter up into the page chapter's bottom padding. */
+.stream:has(> section) {
+  margin-top: -72px;
+}
+
+.placeholderTitle {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.released {
+  position: sticky;
+  top: 80px;
+  margin: 24px auto;
+  padding: 24px;
+  border: 1px dashed color-mix(in srgb, var(--reader-ink) 30%, transparent);
+  border-radius: var(--radius);
+  text-align: center;
+  font-family: var(--font-ui);
+}
+
+.released h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.released p {
+  opacity: 0.75;
 }
 
 .streamStatus {

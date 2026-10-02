@@ -64,8 +64,47 @@
 }
 
 .profile strong {
+  display: block;
   color: var(--brand);
   font-size: 13px;
+}
+
+.profileLink {
+  margin-top: 14px;
+  display: inline-block;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.settingsLinks {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.overview .settingsLinks {
+  padding: 0;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  border: 0;
+}
+
+.settingsLinks a {
+  padding: 14px;
+  display: grid;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+}
+
+.settingsLinks a:hover {
+  border-color: var(--brand);
+}
+
+.settingsLinks small {
+  color: var(--muted);
+  line-height: 1.5;
 }
 
 .content {

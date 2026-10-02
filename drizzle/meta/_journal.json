@@ -57,6 +57,20 @@
       "when": 1790943719499,
       "tag": "0007_productive_shooting_star",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790947491323,
+      "tag": "0008_strange_argent",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790947498940,
+      "tag": "0009_mixed_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

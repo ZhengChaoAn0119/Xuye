@@ -64,14 +64,31 @@
   cursor: pointer;
 }
 
+.controlLink {
+  min-width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
 .controls button[aria-pressed="true"],
-.controls button:hover {
+.controls button:hover,
+.controlLink:hover {
   background: color-mix(in srgb, var(--reader-ink) 10%, transparent);
 }
 
-.controls button[data-toggle][aria-pressed="false"] {
-  opacity: 0.45;
-  text-decoration: line-through;
+@media (max-width: 420px) {
+  .controls {
+    gap: 2px;
+    padding: 4px;
+  }
+
+  .controls button,
+  .controlLink {
+    min-width: 36px;
+    height: 36px;
+  }
 }
 
 .backdrop {

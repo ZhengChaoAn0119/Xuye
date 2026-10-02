@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { buildTestEpub } from "@/server/content/fixtures";
-import { promoteToAdmin, signIn, uniqueEmail, uniqueTitle } from "./support";
+import { ageQuotaCharges, promoteToAdmin, signIn, uniqueEmail, uniqueTitle } from "./support";
 
 let work: { id: number; title: string };
 
@@ -40,7 +40,7 @@ test("a visitor receives 10 story chapters per rolling 24 hours; rereads and not
     await expect(page.getByText(`額度測試內文 ${position}。`)).toBeVisible();
   }
 
-  // Rereading a charged chapter does not consume another unit.
+  // Re-opening a chapter within the reread grace (reload, back) does not consume another unit.
   await page.goto(`/works/${work.id}/chapters/10`);
   await expect(page.getByText("額度測試內文 10。")).toBeVisible();
 
@@ -69,6 +69,31 @@ test("Free accounts show the 50 chapter allowance on the account page", async ({
   await expect(page.getByText("尚未開始本期 24 小時閱讀額度。")).toBeVisible();
 });
 
+test("re-reading a chapter after the grace period counts again", async ({ page }) => {
+  const email = uniqueEmail("quota-reread");
+  await signIn(page, email);
+  const remaining = async () => {
+    await page.goto("/account");
+    return page.getByText(/本期尚可閱讀 \d+／50 章/).textContent();
+  };
+
+  await page.goto(`/works/${work.id}/chapters/1`);
+  await expect(page.getByText("額度測試內文 1。")).toBeVisible();
+  expect(await remaining()).toContain("49／50");
+
+  // A reload inside the grace window is free.
+  await page.goto(`/works/${work.id}/chapters/1`);
+  await expect(page.getByText("額度測試內文 1。")).toBeVisible();
+  expect(await remaining()).toContain("49／50");
+  await expect(page.getByText(/10 分鐘內重新開啟同一章不重複計算/)).toBeVisible();
+
+  // Once the grace has passed, fetching the chapter again is a new read.
+  await ageQuotaCharges(email, 11);
+  await page.goto(`/works/${work.id}/chapters/1`);
+  await expect(page.getByText("額度測試內文 1。")).toBeVisible();
+  expect(await remaining()).toContain("48／50");
+});
+
 test("admins can review and save quota settings", async ({ page }) => {
   const email = uniqueEmail("quota-admin");
   await signIn(page, email);
@@ -77,6 +102,7 @@ test("admins can review and save quota settings", async ({ page }) => {
   await expect(page.getByRole("heading", { level: 1, name: "閱讀額度" })).toBeVisible();
   await expect(page.getByLabel("訪客章數／24 小時")).toHaveValue("10");
   await expect(page.getByLabel("免費會員章數／24 小時")).toHaveValue("50");
+  await expect(page.getByLabel("重複開啟寬限（分鐘）")).toHaveValue("10");
   await page.getByRole("button", { name: "儲存額度設定" }).click();
   await expect(page.getByText("已儲存閱讀額度設定")).toBeVisible();
 });

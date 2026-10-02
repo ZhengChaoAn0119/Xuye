@@ -4,16 +4,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { t } from "@/i18n";
+import styles from "./reader-chrome.module.css";
+import { type ActiveChapter, READER_CHAPTER_EVENT } from "./reader-events";
 import {
-  applyPrefs,
-  normalizePrefs,
-  READER_PREFS_KEY,
   READER_SIZE,
   type ReaderPrefs,
   type ReaderTheme,
+  setLocalPrefs,
+  syncPrefs,
 } from "./reader-prefs";
-import styles from "./reader-chrome.module.css";
-import { type ActiveChapter, READER_CHAPTER_EVENT } from "./reader-events";
+import { usePrefs } from "./use-prefs";
 
 type TocItem = { position: number; title: string; isNote: boolean };
 
@@ -30,19 +30,11 @@ type ReaderChromeProps = {
   initialBookmarked: boolean;
 };
 
-function loadPrefs(): ReaderPrefs {
-  try {
-    return normalizePrefs(JSON.parse(localStorage.getItem(READER_PREFS_KEY) ?? "{}"));
-  } catch {
-    return normalizePrefs(null);
-  }
-}
-
 /** Top bar, floating controls, and table of contents for the chapter reader. */
 export function ReaderChrome(props: ReaderChromeProps) {
   const { workId, workTitle, toc, signedIn } = props;
   const router = useRouter();
-  const [prefs, setPrefs] = useState<ReaderPrefs | null>(null);
+  const prefs = usePrefs();
   const [tocOpen, setTocOpen] = useState(false);
   const [bookmarked, setBookmarked] = useState(props.initialBookmarked);
   // Auto-loaded chapters (chapter-stream) move the reader on without a navigation.
@@ -56,9 +48,6 @@ export function ReaderChrome(props: ReaderChromeProps) {
   const { title: chapterTitle, position: current, id: chapterId, prev, next } = active;
   const currentRef = useRef<HTMLAnchorElement>(null);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- read device prefs after hydration
-  useEffect(() => setPrefs(loadPrefs()), []);
-
   useEffect(() => {
     const onChapter = (event: Event) => {
       const chapter = (event as CustomEvent<ActiveChapter>).detail;
@@ -70,29 +59,15 @@ export function ReaderChrome(props: ReaderChromeProps) {
   }, []);
 
   const update = (change: Partial<ReaderPrefs>) => {
-    const nextPrefs = normalizePrefs({ ...(prefs ?? loadPrefs()), ...change });
-    setPrefs(nextPrefs);
-    applyPrefs(nextPrefs);
-    try {
-      localStorage.setItem(READER_PREFS_KEY, JSON.stringify(nextPrefs));
-    } catch {
-      // storage unavailable: prefs last for this page only
-    }
+    const nextPrefs = setLocalPrefs(change);
     if (signedIn) {
-      const remote: Record<string, unknown> = {};
-      if (change.theme !== undefined) remote.readerTheme = nextPrefs.theme;
-      if (change.size !== undefined) remote.readerFontSize = nextPrefs.size;
-      if (change.font !== undefined) remote.readerFont = nextPrefs.font;
-      if (change.lineHeight !== undefined) remote.lineHeight = nextPrefs.lineHeight;
-      if (change.pageWidth !== undefined) remote.pageWidth = nextPrefs.pageWidth;
-      if (change.autoNext !== undefined) remote.autoNextChapter = nextPrefs.autoNext;
-      void fetch("/api/v1/me/preferences", {
-        method: "PUT",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(remote),
-      });
+      const synced: Partial<ReaderPrefs> = {};
+      for (const key of Object.keys(change) as (keyof ReaderPrefs)[])
+        Object.assign(synced, { [key]: nextPrefs[key] });
+      void syncPrefs(synced);
     }
   };
+  const continuous = prefs?.readingMode === "continuous";
 
   const toggleBookmark = async () => {
     if (!signedIn) {
@@ -196,17 +171,24 @@ export function ReaderChrome(props: ReaderChromeProps) {
         </button>
         <button
           type="button"
-          onClick={() => update({ autoNext: !(prefs?.autoNext ?? true) })}
-          aria-label={t("reader.autoNext")}
-          title={t(prefs?.autoNext === false ? "reader.autoNextOff" : "reader.autoNextOn")}
-          aria-pressed={prefs ? prefs.autoNext : undefined}
-          data-toggle
+          onClick={() => update({ readingMode: continuous ? "paged" : "continuous" })}
+          aria-label={t("reader.continuousMode")}
+          title={t(continuous ? "reader.modeIsContinuous" : "reader.modeIsPaged")}
+          aria-pressed={prefs ? continuous : undefined}
         >
           ⇣
         </button>
         <button type="button" onClick={() => setTocOpen(true)} aria-label={t("reader.toc")}>
           ☰
         </button>
+        <Link
+          href="/settings/reading"
+          className={styles.controlLink}
+          aria-label={t("settings.title")}
+          title={t("settings.title")}
+        >
+          ⚙
+        </Link>
       </div>
 
       {tocOpen && (

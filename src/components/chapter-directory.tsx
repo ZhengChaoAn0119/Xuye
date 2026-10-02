@@ -4,13 +4,17 @@ import Link from "next/link";
 import { useState } from "react";
 import { t } from "@/i18n";
 import styles from "./chapter-directory.module.css";
+import { savePrefs } from "./reader-prefs";
+import { usePrefs } from "./use-prefs";
 
 export type DirectoryItem = { position: number; title: string; isNote: boolean; date: string };
 
 const COLLAPSED = 60;
 
 export function ChapterDirectory({ workId, items }: { workId: number; items: DirectoryItem[] }) {
-  const [newestFirst, setNewestFirst] = useState(false);
+  const newestFirst = usePrefs()?.directoryOrder === "newest";
+  const setNewestFirst = (toggle: (value: boolean) => boolean) =>
+    savePrefs({ directoryOrder: toggle(newestFirst) ? "newest" : "oldest" });
   const [expanded, setExpanded] = useState(false);
   const ordered = newestFirst ? [...items].reverse() : items;
   const shown = expanded ? ordered : ordered.slice(0, COLLAPSED);

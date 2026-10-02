@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { t } from "@/i18n";
+import { displayNameFor } from "@/lib/display-name";
 import { getCurrentUser } from "@/server/authz";
 import { AccountMenu } from "./account-menu";
 import styles from "./site-header.module.css";
@@ -13,7 +14,11 @@ async function AccountSlot() {
     <>
       <ThemePicker signedIn={Boolean(user)} />
       {user ? (
-        <AccountMenu email={user.email} isAdmin={user.role === "admin"} />
+        <AccountMenu
+          name={displayNameFor(user)}
+          email={user.email}
+          isAdmin={user.role === "admin"}
+        />
       ) : (
         // Auth.js endpoints are route handlers, not pages: they need full navigations and must
         // never be prefetched by <Link> (prefetching sign-out could end the session).
@@ -69,7 +74,8 @@ export function SiteFooter() {
       <div className={styles.footerInner}>
         <span>{t("site.footer")}</span>
         <span>
-          {t("site.tagline")}・<Link href="/privacy">{t("site.privacy")}</Link>
+          {t("site.tagline")}・<Link href="/settings">{t("settings.title")}</Link>・
+          <Link href="/privacy">{t("site.privacy")}</Link>
         </span>
       </div>
     </footer>

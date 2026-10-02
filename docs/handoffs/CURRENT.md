@@ -13,6 +13,22 @@ Updated: 2026-10-02 (Asia/Taipei)
 - Work happens on more than one machine and location; always `git pull` and run `pnpm install` plus `pnpm db:migrate` when resuming.
 - **Docker availability differs per machine.** The machine used for the 2026-10-02 Claude session (`E:\project\xuye`, Windows 11) runs Docker Desktop (server 29.4.1) with the `xuye-db-1` and `xuye-mailpit-1` compose services healthy, so Docker Compose verification can be done there. The machine used for the earlier Codex sessions could not start Docker Desktop (no virtualization) and used native PostgreSQL 18 plus Mailpit instead.
 
+## Reading modes, quota grace, settings center (2026-10-02, Claude)
+
+Plan: `C:\Users\User\.claude\plans\rippling-purring-avalanche.md` (approved). Migrations **0008** (enums + prefs columns, `quota_charges.id`, `quota_settings.reread_grace_minutes`) and **0009** (drop `auto_next_chapter`) — split because drizzle-kit's rename prompt cannot run non-interactively. Run `pnpm db:migrate` after pulling.
+
+- **Quota (FUNC-003):** every fetch of story text is charged; a repeat of the same chapter within `reread_grace_minutes` (default 10, `/admin/quota`) after its last charge is free. `withinRereadGrace()` in `src/server/services/quota.ts`.
+- **Reading modes (FUNC-002):** `readingMode` = `paged | continuous | null`. `src/components/reading-mode-prompt.tsx` (native `<dialog>`) asks on first reader visit; "decide later" = paged for the browser session (`sessionStorage`). `chapter-end.tsx` (client) shows buttons only in paged mode; `chapter-stream.tsx` loads only in continuous mode and re-checks on input so short chapters still continue. Toolbar ⇣ toggles the mode, ⚙ links to `/settings/reading`.
+- **Memory (PERF-001):** far chapters → same-height placeholders (text kept), `MAX_CACHED = 30` then explicit reload; `content-visibility: auto` on chapter sections.
+- **Settings (UX-004):** `src/app/(site)/settings/*` (layout + nav + profile/reading/appearance/content/privacy), components in `src/components/settings/*` (old `account-preferences.tsx` removed). `/account` is an overview. Account menu: 個人資訊 / 內容偏好 / 設定 / 後台 / 登出; `use-dismissible-details` now also closes on link click (was a real bug: the menu stayed open across client navigations).
+- **Prefs plumbing:** `reader-prefs.ts` now owns `loadPrefs`, `setLocalPrefs`, `savePrefs`, `syncPrefs`, `serverPatch`, `PREFS_EVENT`, `SITE_BOOT_SCRIPT` (palette + site theme before paint); `use-prefs.ts` hook. `AccountPreferenceSync` enables account sync and fills a missing server `readingMode` from the device.
+- **Display names:** `src/lib/display-name.ts` — `canChangeDisplayName` (no paid tier yet → false), `displayNameFor` (email local part shortened). `PUT /api/v1/me/profile` returns 403 for Free.
+- **Dark mode:** `tokens.css` uses `light-dark()`; `<html data-site-theme>` sets `color-scheme`. Reader shell sets its own `color-scheme` from the reader background (fixes the light TOC drawer in the dark reader).
+- **Data rights:** `GET /api/v1/me/export` (JSON download), `DELETE /api/v1/me` (retype email; admins refused). Terms/consent still to do (DOC-001).
+- **E2E:** `playwright.config.ts` now seeds `readingMode: "paged"` in `storageState` so the prompt does not cover other flows; `reading-experience.spec.ts` clears it. New helper `ageQuotaCharges()` in `tests/e2e/support.ts`.
+- **Verification:** `pnpm check` (91 unit tests), `pnpm build`, production-build `pnpm test:e2e` **58/58** (desktop Chrome + Pixel 7). Real Chrome on the dev DB: prompt → continuous synced to the account; chapters 6→13 auto-loaded with DOM steady at ~450 nodes; scroll-back restored chapter 8 with no new API request; each chapter charged exactly once; dark mode checked in all three palettes; settings/account/reader at 390 px without page overflow.
+- **Dev data left behind:** the signed-in dev account now has `readingMode = continuous` (chosen during the walkthrough; the prompt shows again only for a fresh browser/visitor) and quota 31/50 (14 reads: chapters 6–13 of work 7 by Claude, chapters 200–205 of work 21 from another browser session).
+
 ## Auto-load next chapter and header theme picker (2026-10-02, Claude)
 
 - **FUNC-001 auto-load:** `src/app/(reader)/works/[id]/chapters/[position]/chapter-stream.tsx` appends the next chapter when the reader's own input reaches the bottom of the page. Text comes from the new `GET /api/v1/works/[id]/chapters/[position]` (same `readChapterBody` quota/rate path as the page). The URL (`history.replaceState`), document title, reader top bar, bookmark, TOC marker, and `ReaderProgress` (now measured per chapter element) follow the chapter in view. Quota/rate limits show inline at the end of the stream. End-of-chapter nav is now the shared `chapter-end.tsx`.
@@ -96,7 +112,7 @@ Updated: 2026-10-02 (Asia/Taipei)
 
 - Added signed visitor identities plus HMAC-only IP and coarse browser-trait storage. Raw IP and trait values are not stored; the disclosure is available at `/privacy`.
 - Added `quota_settings`, `quota_windows`, `quota_charges`, `visitor_identities`, and PostgreSQL-backed `rate_limit_windows` in migration `drizzle/0005_tidy_goblin_queen.sql`.
-- Visitor and Free defaults are 10 and 50 story chapters per rolling 24 hours. Reloading/revisiting a charged chapter and reading author notes do not consume quota.
+- Visitor and Free defaults are 10 and 50 story chapters per rolling 24 hours. Author notes do not consume quota. (Superseded 2026-10-02: rereads are charged again after a 10-minute grace — see "Reading modes, quota grace, settings center".)
 - Added transaction-level serialization for concurrent charges, subject and shared-IP rate limits, recovery-time reader messaging, and Free quota status on `/account`.
 - Added `/admin/quota` with independent authorization and audit logging. Admins can adjust both chapter limits without a deploy.
 - Disabled prefetch on chapter links so framework navigation cannot charge before entry. The chapter body remains uncached and is fetched only after authorization.

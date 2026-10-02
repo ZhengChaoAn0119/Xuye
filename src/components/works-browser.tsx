@@ -4,12 +4,14 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { t } from "@/i18n";
 import type { WorkCardData } from "@/lib/work-card";
+import { savePrefs, type WorksView } from "./reader-prefs";
+import { usePrefs } from "./use-prefs";
 import { WorkCover } from "./work-cover";
 import styles from "./works-browser.module.css";
 
 type StatusFilter = "all" | "ongoing" | "completed";
-type View = "grid" | "list";
-const VIEW_KEY = "xuye:works-view";
+type View = WorksView;
+const LEGACY_VIEW_KEY = "xuye:works-view";
 
 /** Work grid/list with a status filter. Filtering is client-side over the cached list. */
 export function WorksBrowser({
@@ -20,26 +22,20 @@ export function WorksBrowser({
   showFilters?: boolean;
 }) {
   const [status, setStatus] = useState<StatusFilter>("all");
-  const [view, setView] = useState<View>("grid");
+  const view: View = usePrefs()?.worksView ?? "grid";
 
+  // One-time move of the older standalone key into the shared preferences.
   useEffect(() => {
     try {
-      const saved = localStorage.getItem(VIEW_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- restore a per-device preference after hydration
-      if (saved === "grid" || saved === "list") setView(saved);
+      const legacy = localStorage.getItem(LEGACY_VIEW_KEY);
+      if (legacy === "grid" || legacy === "list") savePrefs({ worksView: legacy });
+      localStorage.removeItem(LEGACY_VIEW_KEY);
     } catch {
       // storage unavailable; keep the default
     }
   }, []);
 
-  const changeView = (next: View) => {
-    setView(next);
-    try {
-      localStorage.setItem(VIEW_KEY, next);
-    } catch {
-      // ignore
-    }
-  };
+  const changeView = (next: View) => savePrefs({ worksView: next });
 
   const shown = status === "all" ? works : works.filter((w) => w.status === status);
   const filters: [StatusFilter, string][] = [

@@ -18,6 +18,10 @@ export const userTier = pgEnum("user_tier", ["free"]);
 export const readerTheme = pgEnum("reader_theme", ["sepia", "white", "dark"]);
 export const readerFont = pgEnum("reader_font", ["serif", "sans"]);
 export const sitePalette = pgEnum("site_palette", ["a1", "a2", "a3"]);
+export const readingMode = pgEnum("reading_mode", ["paged", "continuous"]);
+export const siteTheme = pgEnum("site_theme", ["light", "dark", "system"]);
+export const worksView = pgEnum("works_view", ["grid", "list"]);
+export const directoryOrder = pgEnum("directory_order", ["oldest", "newest"]);
 
 export const users = pgTable("users", {
   id: text("id")
@@ -45,7 +49,11 @@ export const userPreferences = pgTable("user_preferences", {
   sitePalette: sitePalette("site_palette").notNull().default("a3"),
   lineHeight: integer("line_height").notNull().default(205),
   pageWidth: integer("page_width").notNull().default(720),
-  autoNextChapter: boolean("auto_next_chapter").notNull().default(true),
+  /** null until the reader picks paged or continuous reading on first entering the reader. */
+  readingMode: readingMode("reading_mode"),
+  siteTheme: siteTheme("site_theme").notNull().default("system"),
+  worksView: worksView("works_view").notNull().default("grid"),
+  directoryOrder: directoryOrder("directory_order").notNull().default("oldest"),
   showSexual: boolean("show_sexual").notNull().default(false),
   showViolence: boolean("show_violence").notNull().default(false),
   showBadge: boolean("show_badge").notNull().default(true),

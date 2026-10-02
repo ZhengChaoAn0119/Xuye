@@ -64,6 +64,7 @@ export async function updateChapterAction(
 const quotaSettingsSchema = z.object({
   visitor: z.coerce.number().int().min(1, "至少 1 章").max(10_000, "最多 10,000 章"),
   free: z.coerce.number().int().min(1, "至少 1 章").max(10_000, "最多 10,000 章"),
+  rereadGraceMinutes: z.coerce.number().int().min(0, "不可小於 0").max(120, "最多 120 分鐘"),
 });
 
 export async function updateQuotaSettingsAction(

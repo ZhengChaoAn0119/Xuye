@@ -73,9 +73,20 @@ test("reader can enter every account area, leave it, and is denied admin navigat
   await expect(
     page.locator("details").filter({ has: page.locator('summary[aria-label="開啟帳號選單"]') }),
   ).not.toHaveAttribute("open", "");
-  await page.locator('summary[aria-label="開啟帳號選單"]').click();
-  await page.getByRole("link", { name: "我的", exact: true }).click();
-  await expect(page).toHaveURL(/\/account$/);
+  // The account menu holds the broad, frequent destinations; details live under 設定.
+  for (const [name, path] of [
+    ["內容偏好", /\/settings\/content$/],
+    ["設定", /\/settings$/],
+    ["個人資訊", /\/account$/],
+  ] as const) {
+    await page.locator('summary[aria-label="開啟帳號選單"]').click();
+    await page.getByRole("banner").getByRole("link", { name, exact: true }).click();
+    await expect(page).toHaveURL(path);
+    // Following a link closes the menu even though the header persists across navigations.
+    await expect(
+      page.locator("details").filter({ has: page.locator('summary[aria-label="開啟帳號選單"]') }),
+    ).not.toHaveAttribute("open", "");
+  }
   await page.getByRole("link", { name: "最新" }).click();
   await expect(page).toHaveURL(/\/$/);
 

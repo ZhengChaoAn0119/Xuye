@@ -29,6 +29,8 @@ export const quotaSettings = pgTable("quota_settings", {
   subject: quotaSubject("subject").primaryKey(),
   chaptersPerWindow: integer("chapters_per_window").notNull(),
   windowHours: integer("window_hours").notNull().default(24),
+  /** Re-opening a chapter within this many minutes of its last charge is not charged again. */
+  rereadGraceMinutes: integer("reread_grace_minutes").notNull().default(10),
   updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -48,9 +50,11 @@ export const quotaWindows = pgTable(
   ],
 );
 
+/** One row per charged chapter read; the same chapter is charged again after the reread grace. */
 export const quotaCharges = pgTable(
   "quota_charges",
   {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
     windowId: integer("window_id")
       .notNull()
       .references(() => quotaWindows.id, { onDelete: "cascade" }),
@@ -59,7 +63,7 @@ export const quotaCharges = pgTable(
       .references(() => chapters.id, { onDelete: "cascade" }),
     chargedAt: timestamp("charged_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [primaryKey({ columns: [t.windowId, t.chapterId] })],
+  (t) => [index("quota_charges_window_chapter_idx").on(t.windowId, t.chapterId, t.chargedAt)],
 );
 
 export const rateLimitWindows = pgTable(
