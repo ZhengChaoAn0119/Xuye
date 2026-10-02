@@ -66,9 +66,16 @@
   cursor: pointer;
 }
 
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: none;
+}
+
 .accountMenu {
   position: relative;
-  margin-left: auto;
 }
 
 .accountSummary {
@@ -226,6 +233,10 @@
 
   .brand {
     font-size: 20px;
+  }
+
+  .actions {
+    gap: 10px;
   }
 
   .searchInput {

@@ -8,6 +8,27 @@ Updated: 2026-10-02 (Asia/Taipei)
 - Plan: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md`, including the new "Public reader site" section.
 - Pushed to `origin/main` on 2026-10-01. The first GitHub Actions run (#36880738989, commit `8292c11`) passed every job: "Lint, types, unit tests" (33 s), "Build and end-to-end tests" (84 s), and "Docker image builds" (72 s). Before pushing, the same three jobs were run locally from a clean clone, with no `.env`, and passed.
 
+## Development machines
+
+- Work happens on more than one machine and location; always `git pull` and run `pnpm install` plus `pnpm db:migrate` when resuming.
+- **Docker availability differs per machine.** The machine used for the 2026-10-02 Claude session (`E:\project\xuye`, Windows 11) runs Docker Desktop (server 29.4.1) with the `xuye-db-1` and `xuye-mailpit-1` compose services healthy, so Docker Compose verification can be done there. The machine used for the earlier Codex sessions could not start Docker Desktop (no virtualization) and used native PostgreSQL 18 plus Mailpit instead.
+
+## Auto-load next chapter and header theme picker (2026-10-02, Claude)
+
+- **FUNC-001 auto-load:** `src/app/(reader)/works/[id]/chapters/[position]/chapter-stream.tsx` appends the next chapter when the reader's own input reaches the bottom of the page. Text comes from the new `GET /api/v1/works/[id]/chapters/[position]` (same `readChapterBody` quota/rate path as the page). The URL (`history.replaceState`), document title, reader top bar, bookmark, TOC marker, and `ReaderProgress` (now measured per chapter element) follow the chapter in view. Quota/rate limits show inline at the end of the stream. End-of-chapter nav is now the shared `chapter-end.tsx`.
+- **Preference:** `auto_next_chapter` (default on) in `user_preferences`, migration `drizzle/0007_productive_shooting_star.sql`; local prefs key `autoNext`. Toggles: the ⇣ button in the reader toolbar and 「自動載入下一章」 on `/account`.
+- **UX-003 theme picker:** `src/components/theme-picker.tsx` in the site header for everyone (visitors store it locally; members also PUT `sitePalette`). Account page label renamed to 「佈景主題」. `use-dismissible-details.ts` now backs both header popovers. Palette preview colors live in `tokens.css` as `--swatch-*`.
+- **Verification:** `pnpm check` (79 unit tests), `pnpm build`, full production-build `pnpm test:e2e` 48/48 on desktop Chrome and Pixel 7 (new `tests/e2e/reading-experience.spec.ts`). Real Chrome on the dev DB: chapters 3→4→5 auto-loaded, URL/title/top bar switched both directions, reload restored mid-chapter-4 without triggering a load, toggle off/on synced to the server, quota moved 48→45 (one unit per chapter), simulated 429 rendered the quota notice, header/account palette sync both ways, 390 px picker without overflow.
+- Run `pnpm db:migrate` after pulling (0007).
+
+## Real-Chrome walkthrough (2026-10-02, Claude in Chrome, `pnpm dev`)
+
+- Signed in as an admin account on the Docker-backed dev database (29 works, 5,460 chapters). Home, search, work, reader, library, history, account, privacy, signin/verify/auth-error, 404, `/admin`, and `/admin/quota` match the docs.
+- Verified: account menu (outside click and Escape close it, focus returns), directory collapse at 60, reader noindex/immersive layout/arrow keys/dark theme/TOC current marker, progress and theme restore after reload, "continue reading" on the work page, bookshelf add/remove with undo, history entry, palette switch (A1 ↔ A3), Free quota counter (48/50), admin quota defaults 10/50, signed-out redirects, and no horizontal overflow at 390 px (iframe check; the maximized window could not be resized).
+- Not verified in a real browser: the visitor quota-exhausted state (needs a cookie-less browser session) and Google sign-in.
+- UX observations for the upcoming fix round: the floating reader toolbar overlaps body text at the bottom; the TOC drawer stays light in the dark reader theme; the long email wraps awkwardly as the account-page heading; an admin account is labelled "免費會員"; the admin logo mark is "序" while the site mark is "續".
+- Dev-only log noise: requesting `/admin` without a session logs "Could not validate `instant`… NEXT_REDIRECT"; the redirect itself works.
+
 ## Phase 2 delivered
 
 - **Routes:** `src/app/(site)/` (header and footer layout) contains `/`, `/search`, and `/works/[id]`. `src/app/(reader)/works/[id]/chapters/[position]` is the immersive reader with no site header. There is also a global `not-found.tsx` and `robots.ts`.

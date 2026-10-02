@@ -11,6 +11,7 @@ const preferencesSchema = z
     sitePalette: z.enum(["a1", "a2", "a3"]),
     lineHeight: z.number().int().min(150).max(260),
     pageWidth: z.number().int().min(560).max(920),
+    autoNextChapter: z.boolean(),
     showSexual: z.boolean(),
     showViolence: z.boolean(),
     showBadge: z.boolean(),

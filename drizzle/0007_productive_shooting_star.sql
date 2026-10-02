@@ -1,0 +1,1 @@
+ALTER TABLE "user_preferences" ADD COLUMN "auto_next_chapter" boolean DEFAULT true NOT NULL;

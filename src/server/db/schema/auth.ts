@@ -45,6 +45,7 @@ export const userPreferences = pgTable("user_preferences", {
   sitePalette: sitePalette("site_palette").notNull().default("a3"),
   lineHeight: integer("line_height").notNull().default(205),
   pageWidth: integer("page_width").notNull().default(720),
+  autoNextChapter: boolean("auto_next_chapter").notNull().default(true),
   showSexual: boolean("show_sexual").notNull().default(false),
   showViolence: boolean("show_violence").notNull().default(false),
   showBadge: boolean("show_badge").notNull().default(true),

@@ -1,34 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef } from "react";
 import { signOutAction } from "@/app/auth-actions";
 import { t } from "@/i18n";
 import styles from "./site-header.module.css";
+import { useDismissibleDetails } from "./use-dismissible-details";
 
 export function AccountMenu({ email, isAdmin }: { email: string | null; isAdmin: boolean }) {
-  const detailsRef = useRef<HTMLDetailsElement>(null);
+  const detailsRef = useDismissibleDetails();
   const initial = (email ?? "?").slice(0, 1).toUpperCase();
-
-  useEffect(() => {
-    const closeOutside = (event: PointerEvent) => {
-      const details = detailsRef.current;
-      if (details?.open && event.target instanceof Node && !details.contains(event.target)) {
-        details.removeAttribute("open");
-      }
-    };
-    const closeWithEscape = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || !detailsRef.current?.open) return;
-      detailsRef.current.removeAttribute("open");
-      detailsRef.current.querySelector("summary")?.focus();
-    };
-    document.addEventListener("pointerdown", closeOutside);
-    document.addEventListener("keydown", closeWithEscape);
-    return () => {
-      document.removeEventListener("pointerdown", closeOutside);
-      document.removeEventListener("keydown", closeWithEscape);
-    };
-  }, []);
 
   return (
     <details ref={detailsRef} className={styles.accountMenu}>

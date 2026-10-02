@@ -50,6 +50,13 @@
       "when": 1790926539777,
       "tag": "0006_condemned_frank_castle",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790943719499,
+      "tag": "0007_productive_shooting_star",
+      "breakpoints": true
     }
   ]
 }

@@ -10,15 +10,22 @@ describe("normalizePrefs", () => {
       palette: "a3",
       lineHeight: 205,
       pageWidth: 720,
+      autoNext: true,
     });
-    expect(normalizePrefs({ theme: "neon", size: "big" })).toEqual({
+    expect(normalizePrefs({ theme: "neon", size: "big", autoNext: "no" })).toEqual({
       theme: "sepia",
       size: 19,
       font: "serif",
       palette: "a3",
       lineHeight: 205,
       pageWidth: 720,
+      autoNext: true,
     });
+  });
+
+  it("keeps auto-loading off only when explicitly disabled", () => {
+    expect(normalizePrefs({ autoNext: false }).autoNext).toBe(false);
+    expect(normalizePrefs({ autoNext: true }).autoNext).toBe(true);
   });
 
   it("clamps and rounds the font size", () => {

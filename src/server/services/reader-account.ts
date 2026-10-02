@@ -20,6 +20,7 @@ export const DEFAULT_READER_PREFERENCES = {
   sitePalette: "a3" as const,
   lineHeight: 205,
   pageWidth: 720,
+  autoNextChapter: true,
   showSexual: false,
   showViolence: false,
   showBadge: true,
@@ -32,6 +33,7 @@ export type ReaderPreferences = {
   sitePalette: "a1" | "a2" | "a3";
   lineHeight: number;
   pageWidth: number;
+  autoNextChapter: boolean;
   showSexual: boolean;
   showViolence: boolean;
   showBadge: boolean;
@@ -52,6 +54,7 @@ export function normalizeReaderPreferences(value: Partial<ReaderPreferences>): R
     sitePalette: ["a1", "a2", "a3"].includes(value.sitePalette ?? "") ? value.sitePalette! : "a3",
     lineHeight: integerIn(value.lineHeight, 150, 260, 205),
     pageWidth: integerIn(value.pageWidth, 560, 920, 720),
+    autoNextChapter: value.autoNextChapter !== false,
     showSexual: value.showSexual === true,
     showViolence: value.showViolence === true,
     showBadge: value.showBadge !== false,

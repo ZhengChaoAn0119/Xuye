@@ -69,6 +69,11 @@
   background: color-mix(in srgb, var(--reader-ink) 10%, transparent);
 }
 
+.controls button[data-toggle][aria-pressed="false"] {
+  opacity: 0.45;
+  text-decoration: line-through;
+}
+
 .backdrop {
   position: fixed;
   inset: 0;

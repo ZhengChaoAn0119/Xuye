@@ -17,6 +17,8 @@ export type ReaderPrefs = {
   palette: SitePalette;
   lineHeight: number;
   pageWidth: number;
+  /** Append the next chapter when the reader reaches the end of the current one. */
+  autoNext: boolean;
 };
 
 export function normalizePrefs(value: unknown): ReaderPrefs {
@@ -45,7 +47,8 @@ export function normalizePrefs(value: unknown): ReaderPrefs {
     typeof raw.pageWidth === "number" && Number.isFinite(raw.pageWidth)
       ? Math.min(READER_PAGE_WIDTH.max, Math.max(READER_PAGE_WIDTH.min, Math.round(raw.pageWidth)))
       : READER_PAGE_WIDTH.default;
-  return { theme, size, font, palette, lineHeight, pageWidth };
+  const autoNext = raw.autoNext !== false;
+  return { theme, size, font, palette, lineHeight, pageWidth, autoNext };
 }
 
 export function applyPrefs(prefs: ReaderPrefs) {
@@ -56,6 +59,26 @@ export function applyPrefs(prefs: ReaderPrefs) {
   root.style.setProperty("--reader-size", `${prefs.size}px`);
   root.style.setProperty("--reader-line-height", String(prefs.lineHeight / 100));
   root.style.setProperty("--reader-width", `${prefs.pageWidth}px`);
+}
+
+/** Fired on window after the site palette changes, so open pickers stay in sync. */
+export const PALETTE_EVENT = "xuye:palette";
+
+/** Stores and applies a site palette locally; signed-in callers also PUT it to the server. */
+export function setLocalPalette(palette: SitePalette): ReaderPrefs {
+  let current: unknown = null;
+  try {
+    current = JSON.parse(localStorage.getItem(READER_PREFS_KEY) ?? "{}");
+  } catch {}
+  const next = normalizePrefs({ ...(current as object), palette });
+  try {
+    localStorage.setItem(READER_PREFS_KEY, JSON.stringify(next));
+  } catch {
+    // storage unavailable: the palette lasts for this page only
+  }
+  document.documentElement.dataset.palette = next.palette;
+  window.dispatchEvent(new CustomEvent(PALETTE_EVENT, { detail: next.palette }));
+  return next;
 }
 
 /** Static pre-paint script. Keep it in sync with normalizePrefs/applyPrefs. */

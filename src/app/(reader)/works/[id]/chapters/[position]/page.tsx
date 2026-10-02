@@ -13,6 +13,8 @@ import { getDb } from "@/server/db";
 import { getRequestReader } from "@/server/reader";
 import { contentAllowed, getChapterAccountState } from "@/server/services/reader-account";
 import { getReadIdentity } from "@/server/request-identity";
+import { ChapterEnd } from "./chapter-end";
+import { ChapterStream } from "./chapter-stream";
 import styles from "./reader.module.css";
 
 type Params = PageProps<"/works/[id]/chapters/[position]">["params"];
@@ -102,40 +104,13 @@ async function ChapterText({
           <p key={i}>{paragraph}</p>
         ))}
       </div>
-      <nav className={styles.end} aria-label={t("reader.chapterNav")}>
-        <p className={styles.meta}>{t("reader.endOf", { title: chapterTitle })}</p>
-        {next === null && <h2 className={styles.caughtUp}>{t("reader.caughtUp")}</h2>}
-        <div className={styles.endActions}>
-          {prev !== null ? (
-            <Link
-              className={styles.button}
-              href={`/works/${workId}/chapters/${prev}`}
-              rel="prev"
-              prefetch={false}
-            >
-              ← {t("reader.prev")}
-            </Link>
-          ) : (
-            <span className={styles.buttonDisabled} aria-disabled="true">
-              ← {t("reader.prev")}
-            </span>
-          )}
-          {next !== null ? (
-            <Link
-              className={styles.primary}
-              href={`/works/${workId}/chapters/${next}`}
-              rel="next"
-              prefetch={false}
-            >
-              {t("reader.next")} →
-            </Link>
-          ) : (
-            <Link className={styles.primary} href={`/works/${workId}`}>
-              {t("reader.back")}
-            </Link>
-          )}
-        </div>
-      </nav>
+      <ChapterEnd
+        workId={workId}
+        position={position}
+        title={chapterTitle}
+        prev={prev}
+        next={next}
+      />
     </>
   );
 }
@@ -184,7 +159,7 @@ async function Reader({ params }: { params: Params }) {
         initialBookmarked={accountState.bookmarked}
       />
       {!user && <VisitorTraitReporter />}
-      <article className={styles.article}>
+      <article className={styles.article} data-chapter-position={entry.position}>
         <header className={styles.header}>
           <p className={styles.meta}>
             <Link href={`/works/${work.id}`}>{work.title}</Link>
@@ -230,6 +205,20 @@ async function Reader({ params }: { params: Params }) {
           </section>
         )}
       </article>
+      {allowed && (
+        <ChapterStream
+          workId={work.id}
+          workTitle={work.title}
+          initial={{
+            id: entry.id,
+            position: entry.position,
+            title: entry.title,
+            prev,
+            next,
+            bookmarked: accountState.bookmarked,
+          }}
+        />
+      )}
     </>
   );
 }

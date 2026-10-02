@@ -1,9 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { t } from "@/i18n";
 import type { ReaderPreferences } from "@/server/services/reader-account";
-import { applyPrefs, normalizePrefs, READER_PREFS_KEY } from "./reader-prefs";
+import {
+  applyPrefs,
+  normalizePrefs,
+  PALETTE_EVENT,
+  READER_PREFS_KEY,
+  type SitePalette,
+} from "./reader-prefs";
 import styles from "./account-preferences.module.css";
 
 type Props = { initial: ReaderPreferences; initiallyAgeVerified: boolean };
@@ -37,6 +43,16 @@ export function AccountPreferences({ initial, initiallyAgeVerified }: Props) {
   const [showAgeForm, setShowAgeForm] = useState(false);
   const [message, setMessage] = useState("");
 
+  // The header theme picker saves on its own; mirror its choice here.
+  useEffect(() => {
+    const onChange = (event: Event) => {
+      const sitePalette = (event as CustomEvent<SitePalette>).detail;
+      setPreferences((current) => ({ ...current, sitePalette }));
+    };
+    window.addEventListener(PALETTE_EVENT, onChange);
+    return () => window.removeEventListener(PALETTE_EVENT, onChange);
+  }, []);
+
   const syncLocalReader = (next: ReaderPreferences) => {
     const local = normalizePrefs({
       theme: next.readerTheme,
@@ -45,11 +61,13 @@ export function AccountPreferences({ initial, initiallyAgeVerified }: Props) {
       font: next.readerFont,
       lineHeight: next.lineHeight,
       pageWidth: next.pageWidth,
+      autoNext: next.autoNextChapter,
     });
     try {
       localStorage.setItem(READER_PREFS_KEY, JSON.stringify(local));
     } catch {}
     applyPrefs(local);
+    window.dispatchEvent(new CustomEvent(PALETTE_EVENT, { detail: local.palette }));
   };
 
   const save = async (patch: Partial<ReaderPreferences>) => {
@@ -199,6 +217,17 @@ export function AccountPreferences({ initial, initiallyAgeVerified }: Props) {
           />
           <output>{preferences.pageWidth}px</output>
         </label>
+        <div className={styles.setting}>
+          <div>
+            <strong>{t("account.autoNext")}</strong>
+            <small>{t("account.autoNextHint")}</small>
+          </div>
+          <Toggle
+            checked={preferences.autoNextChapter}
+            onClick={() => void save({ autoNextChapter: !preferences.autoNextChapter })}
+            label={t("account.autoNext")}
+          />
+        </div>
       </section>
 
       <section className={styles.group} aria-labelledby="content-settings">

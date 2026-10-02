@@ -93,18 +93,18 @@
 }
 
 .a1 {
-  --swatch-bg: #f4efe6;
-  --swatch-brand: #536756;
+  --swatch-bg: var(--swatch-a1-bg);
+  --swatch-brand: var(--swatch-a1-brand);
 }
 
 .a2 {
-  --swatch-bg: #f5f6f8;
-  --swatch-brand: #5d73b6;
+  --swatch-bg: var(--swatch-a2-bg);
+  --swatch-brand: var(--swatch-a2-brand);
 }
 
 .a3 {
-  --swatch-bg: #f7f7f5;
-  --swatch-brand: #9b2335;
+  --swatch-bg: var(--swatch-a3-bg);
+  --swatch-brand: var(--swatch-a3-brand);
 }
 
 .range input {

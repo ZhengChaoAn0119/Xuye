@@ -5,19 +5,24 @@ import { getCurrentUser } from "@/server/authz";
 import { AccountMenu } from "./account-menu";
 import styles from "./site-header.module.css";
 import { SiteNav } from "./site-nav";
+import { ThemePicker } from "./theme-picker";
 
 async function AccountSlot() {
   const user = await getCurrentUser();
-  // Auth.js endpoints are route handlers, not pages: they need full navigations and must
-  // never be prefetched by <Link> (prefetching sign-out could end the session).
-  if (!user) {
-    return (
-      <a className={styles.account} href="/signin">
-        {t("nav.signIn")}
-      </a>
-    );
-  }
-  return <AccountMenu email={user.email} isAdmin={user.role === "admin"} />;
+  return (
+    <>
+      <ThemePicker signedIn={Boolean(user)} />
+      {user ? (
+        <AccountMenu email={user.email} isAdmin={user.role === "admin"} />
+      ) : (
+        // Auth.js endpoints are route handlers, not pages: they need full navigations and must
+        // never be prefetched by <Link> (prefetching sign-out could end the session).
+        <a className={styles.account} href="/signin">
+          {t("nav.signIn")}
+        </a>
+      )}
+    </>
+  );
 }
 
 export function SiteHeader() {
@@ -42,9 +47,11 @@ export function SiteHeader() {
             ⌕
           </button>
         </form>
-        <Suspense fallback={<span className={styles.accountPlaceholder} />}>
-          <AccountSlot />
-        </Suspense>
+        <div className={styles.actions}>
+          <Suspense fallback={<span className={styles.accountPlaceholder} />}>
+            <AccountSlot />
+          </Suspense>
+        </div>
       </div>
       <SiteNav
         label={t("a11y.mainNav")}

@@ -141,6 +141,33 @@
   margin-top: 16px;
 }
 
+.stream > .article {
+  padding-top: 0;
+}
+
+.streamStatus {
+  width: min(100% - 40px, var(--reader-width));
+  margin: -72px auto 0;
+  padding-bottom: 96px;
+  text-align: center;
+}
+
+.streamStatus:empty {
+  margin-top: 0;
+  padding-bottom: 0;
+}
+
+.inlineButton {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand);
+  font: inherit;
+  font-weight: 800;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .button,
 .buttonDisabled,
 .primary {

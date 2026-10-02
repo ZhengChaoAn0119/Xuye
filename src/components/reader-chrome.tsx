@@ -13,6 +13,7 @@ import {
   type ReaderTheme,
 } from "./reader-prefs";
 import styles from "./reader-chrome.module.css";
+import { type ActiveChapter, READER_CHAPTER_EVENT } from "./reader-events";
 
 type TocItem = { position: number; title: string; isNote: boolean };
 
@@ -39,15 +40,34 @@ function loadPrefs(): ReaderPrefs {
 
 /** Top bar, floating controls, and table of contents for the chapter reader. */
 export function ReaderChrome(props: ReaderChromeProps) {
-  const { workId, workTitle, chapterTitle, current, chapterId, prev, next, toc, signedIn } = props;
+  const { workId, workTitle, toc, signedIn } = props;
   const router = useRouter();
   const [prefs, setPrefs] = useState<ReaderPrefs | null>(null);
   const [tocOpen, setTocOpen] = useState(false);
   const [bookmarked, setBookmarked] = useState(props.initialBookmarked);
+  // Auto-loaded chapters (chapter-stream) move the reader on without a navigation.
+  const [active, setActive] = useState({
+    title: props.chapterTitle,
+    position: props.current,
+    id: props.chapterId,
+    prev: props.prev,
+    next: props.next,
+  });
+  const { title: chapterTitle, position: current, id: chapterId, prev, next } = active;
   const currentRef = useRef<HTMLAnchorElement>(null);
 
   // eslint-disable-next-line react-hooks/set-state-in-effect -- read device prefs after hydration
   useEffect(() => setPrefs(loadPrefs()), []);
+
+  useEffect(() => {
+    const onChapter = (event: Event) => {
+      const chapter = (event as CustomEvent<ActiveChapter>).detail;
+      setActive(chapter);
+      setBookmarked(chapter.bookmarked);
+    };
+    window.addEventListener(READER_CHAPTER_EVENT, onChapter);
+    return () => window.removeEventListener(READER_CHAPTER_EVENT, onChapter);
+  }, []);
 
   const update = (change: Partial<ReaderPrefs>) => {
     const nextPrefs = normalizePrefs({ ...(prefs ?? loadPrefs()), ...change });
@@ -65,6 +85,7 @@ export function ReaderChrome(props: ReaderChromeProps) {
       if (change.font !== undefined) remote.readerFont = nextPrefs.font;
       if (change.lineHeight !== undefined) remote.lineHeight = nextPrefs.lineHeight;
       if (change.pageWidth !== undefined) remote.pageWidth = nextPrefs.pageWidth;
+      if (change.autoNext !== undefined) remote.autoNextChapter = nextPrefs.autoNext;
       void fetch("/api/v1/me/preferences", {
         method: "PUT",
         headers: { "content-type": "application/json" },
@@ -172,6 +193,16 @@ export function ReaderChrome(props: ReaderChromeProps) {
           title={t("reader.fontLarger")}
         >
           A＋
+        </button>
+        <button
+          type="button"
+          onClick={() => update({ autoNext: !(prefs?.autoNext ?? true) })}
+          aria-label={t("reader.autoNext")}
+          title={t(prefs?.autoNext === false ? "reader.autoNextOff" : "reader.autoNextOn")}
+          aria-pressed={prefs ? prefs.autoNext : undefined}
+          data-toggle
+        >
+          ⇣
         </button>
         <button type="button" onClick={() => setTocOpen(true)} aria-label={t("reader.toc")}>
           ☰

@@ -27,6 +27,11 @@ describe("normalizeReaderPreferences", () => {
     });
   });
 
+  it("auto-loads the next chapter unless the reader turned it off", () => {
+    expect(normalizeReaderPreferences({}).autoNextChapter).toBe(true);
+    expect(normalizeReaderPreferences({ autoNextChapter: false }).autoNextChapter).toBe(false);
+  });
+
   it("keeps sensitive content hidden by default", () => {
     expect(normalizeReaderPreferences({})).toMatchObject({
       showSexual: false,

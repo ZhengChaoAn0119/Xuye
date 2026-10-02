@@ -1,0 +1,184 @@
+.picker {
+  position: relative;
+  flex: none;
+}
+
+.summary {
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+
+.summary::-webkit-details-marker {
+  display: none;
+}
+
+.summary:hover {
+  color: var(--brand);
+}
+
+.chip {
+  width: 22px;
+  height: 22px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--p-bg) 0 50%, var(--p-brand) 50% 100%);
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 60;
+  right: 0;
+  top: calc(100% + 6px);
+  width: 280px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: 0 14px 34px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+.heading {
+  margin: 0;
+  font-weight: 800;
+}
+
+.hint {
+  margin: 4px 0 12px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.options {
+  display: grid;
+  gap: 6px;
+}
+
+.option {
+  width: 100%;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--surface-2);
+}
+
+.option[aria-pressed="true"] {
+  border-color: var(--brand);
+  background: var(--soft);
+}
+
+.preview {
+  position: relative;
+  width: 48px;
+  height: 34px;
+  flex: none;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: var(--radius-control);
+  background: var(--p-bg);
+}
+
+/* A miniature page: header bar, brand mark, and accent rule. */
+.preview span:nth-child(1) {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 9px;
+  background: var(--p-surface);
+  border-bottom: 1px solid color-mix(in srgb, var(--p-brand) 22%, transparent);
+}
+
+.preview span:nth-child(2) {
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 1px;
+  background: var(--p-brand);
+}
+
+.preview span:nth-child(3) {
+  position: absolute;
+  left: 5px;
+  right: 14px;
+  bottom: 7px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--p-accent);
+}
+
+.text {
+  display: grid;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.text strong {
+  font-size: 14px;
+}
+
+.text small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.check {
+  width: 16px;
+  color: var(--brand);
+  font-weight: 900;
+}
+
+.a1 {
+  --p-bg: var(--swatch-a1-bg);
+  --p-surface: var(--swatch-a1-surface);
+  --p-brand: var(--swatch-a1-brand);
+  --p-accent: var(--swatch-a1-accent);
+}
+
+.a2 {
+  --p-bg: var(--swatch-a2-bg);
+  --p-surface: var(--swatch-a2-surface);
+  --p-brand: var(--swatch-a2-brand);
+  --p-accent: var(--swatch-a2-accent);
+}
+
+.a3 {
+  --p-bg: var(--swatch-a3-bg);
+  --p-surface: var(--swatch-a3-surface);
+  --p-brand: var(--swatch-a3-brand);
+  --p-accent: var(--swatch-a3-accent);
+}
+
+@media (max-width: 640px) {
+  .label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .dropdown {
+    position: fixed;
+    left: var(--gutter);
+    right: var(--gutter);
+    top: 62px;
+    width: auto;
+  }
+}

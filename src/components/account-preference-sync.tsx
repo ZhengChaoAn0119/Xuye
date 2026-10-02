@@ -2,7 +2,13 @@
 
 import { useEffect } from "react";
 import type { ReaderPreferences } from "@/server/services/reader-account";
-import { applyPrefs, normalizePrefs, READER_PREFS_KEY, type ReaderPrefs } from "./reader-prefs";
+import {
+  applyPrefs,
+  normalizePrefs,
+  PALETTE_EVENT,
+  READER_PREFS_KEY,
+  type ReaderPrefs,
+} from "./reader-prefs";
 
 function localFromServer(preferences: ReaderPreferences): ReaderPrefs {
   return normalizePrefs({
@@ -12,6 +18,7 @@ function localFromServer(preferences: ReaderPreferences): ReaderPrefs {
     palette: preferences.sitePalette,
     lineHeight: preferences.lineHeight,
     pageWidth: preferences.pageWidth,
+    autoNext: preferences.autoNextChapter,
   });
 }
 
@@ -23,6 +30,7 @@ function serverFromLocal(preferences: ReaderPrefs) {
     sitePalette: preferences.palette,
     lineHeight: preferences.lineHeight,
     pageWidth: preferences.pageWidth,
+    autoNextChapter: preferences.autoNext,
   };
 }
 
@@ -39,6 +47,7 @@ export function AccountPreferenceSync({
         const local = localFromServer(preferences);
         localStorage.setItem(READER_PREFS_KEY, JSON.stringify(local));
         applyPrefs(local);
+        window.dispatchEvent(new CustomEvent(PALETTE_EVENT, { detail: local.palette }));
       } else {
         const local = normalizePrefs(JSON.parse(localStorage.getItem(READER_PREFS_KEY) ?? "{}"));
         void fetch("/api/v1/me/preferences", {

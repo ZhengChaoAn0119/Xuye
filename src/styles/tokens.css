@@ -57,6 +57,20 @@
   --reader-size: 19px;
   --reader-line-height: 2.05;
   --reader-width: 720px;
+
+  /* Fixed previews of each palette for theme pickers (independent of the active palette) */
+  --swatch-a1-bg: #f4efe6;
+  --swatch-a1-surface: #fffaf1;
+  --swatch-a1-brand: #536756;
+  --swatch-a1-accent: #536756;
+  --swatch-a2-bg: #f5f6f8;
+  --swatch-a2-surface: #ffffff;
+  --swatch-a2-brand: #5d73b6;
+  --swatch-a2-accent: #e84f76;
+  --swatch-a3-bg: #f7f7f5;
+  --swatch-a3-surface: #ffffff;
+  --swatch-a3-brand: #9b2335;
+  --swatch-a3-accent: #9b2335;
 }
 
 /* A1/A2 contribute colors only; every option keeps the production A3 layout. */

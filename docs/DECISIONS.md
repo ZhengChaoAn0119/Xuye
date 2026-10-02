@@ -129,5 +129,7 @@ Update this file only for decisions that should survive tools, computers, branch
 - A3 is the primary layout direction (confirmed 2026-10-01 after interactive review). New feature work targets A3 first, and A3 remains the default palette.
 - A2 (Komiic-inspired utility model) was reviewed and rejected for this product's structure and navigation. Its code stays in the prototype only as a comparison reference; do not extend it to more screens.
 - A1, A2, and A3 are user-selectable color palettes on the production A3 layout. The choice is stored locally for pre-paint rendering and synchronized through account preferences for signed-in readers; palette selection never changes navigation or page structure.
+- The palette is presented to readers as 「佈景主題」 and is switchable from the site header by everyone, visitors included (device-local for visitors, synced for signed-in readers); the account page keeps the same control.
+- The reader auto-loads the next chapter by default (continuous reading). It only fetches after the reader's own input reaches the bottom of the page, charges quota exactly like opening the chapter, keeps the URL/title/top bar/progress on the chapter in view, and can be turned off from the reader toolbar or account settings.
 - Reader-facing production copy is Traditional Chinese (`zh-Hant`) only for now. Copy continues to use the typed `t()` catalog so `zh-Hans`, `en`, and `ja` catalogs can be added later without replacing component APIs.
 - Prototype works, covers, authors, and reviews remain fictional.
