@@ -17,6 +17,7 @@ Updated: 2026-10-02 (Asia/Taipei)
 
 - UX-005: the reader top bar's book title now links to the work page's chapter directory (`/works/[id]#directory`) and the chapter title opens the TOC drawer. `ChapterDirectory` scrolls itself into view for `#directory` because it streams in after navigation.
 - Bookshelf/bookmark PUTs use `keepalive` so a save survives immediate navigation.
+- Per user request, the chapter header no longer shows the small book/author link above the title or the reading time and word count below it (page chapter and continuous-mode chapters); only the note badge and the title remain. `reader.meta` copy removed.
 - Verification: `pnpm check` (91 unit tests), production build, `pnpm test:e2e` 60/60 (twice, no flaky), real Chrome.
 
 ## Reading modes, quota grace, settings center (2026-10-02, Claude)

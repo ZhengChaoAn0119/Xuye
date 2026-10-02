@@ -84,6 +84,9 @@ test("paged reading keeps chapter buttons and never loads ahead", async ({ page 
 test("the reader's top bar leads to the work directory and the chapter list", async ({ page }) => {
   await openChapterAndChoose(page, "翻頁閱讀");
   const topBar = page.locator("header").first();
+  // The chapter opens with just its title: no repeated book link, reading time, or word count.
+  await expect(page.locator("article header")).toHaveText("第 1 章");
+  await expect(page.getByText(/分鐘・本章/)).toHaveCount(0);
 
   // The chapter title opens the in-reader table of contents.
   await topBar.getByRole("button", { name: "第 1 章" }).click();

@@ -7,7 +7,6 @@ import { ReaderProgress } from "@/components/reader-progress";
 import { ReadingModePrompt } from "@/components/reading-mode-prompt";
 import { VisitorTraitReporter } from "@/components/visitor-trait-reporter";
 import { t } from "@/i18n";
-import { formatNumber } from "@/lib/format";
 import { getWork, readChapterBody } from "@/server/catalog";
 import { neighbors } from "@/server/services/catalog";
 import { getDb } from "@/server/db";
@@ -139,7 +138,6 @@ async function Reader({ params }: { params: Params }) {
     work.directory.map((c) => c.position),
     entry.position,
   );
-  const minutes = Math.max(1, Math.round(entry.wordCount / 500));
 
   return (
     <>
@@ -162,16 +160,10 @@ async function Reader({ params }: { params: Params }) {
       {!user && <VisitorTraitReporter />}
       <ReadingModePrompt signedIn={Boolean(user)} />
       <article className={styles.article} data-chapter-position={entry.position}>
+        {/* The top bar already names the book; the chapter opens with just its title. */}
         <header className={styles.header}>
-          <p className={styles.meta}>
-            <Link href={`/works/${work.id}`}>{work.title}</Link>
-            {work.authorName && `・${work.authorName}`}
-          </p>
           {entry.kind === "note" && <p className={styles.noteBadge}>{t("reader.noteBadge")}</p>}
           <h1 className={styles.title}>{entry.title}</h1>
-          <p className={styles.meta}>
-            {t("reader.meta", { minutes, words: formatNumber(entry.wordCount) })}
-          </p>
         </header>
         {allowed ? (
           <Suspense fallback={<TextSkeleton />}>

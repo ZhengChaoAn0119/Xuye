@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { type ActiveChapter, announceActiveChapter } from "@/components/reader-events";
 import { usePrefs } from "@/components/use-prefs";
 import { t } from "@/i18n";
-import { formatDateTime, formatNumber } from "@/lib/format";
+import { formatDateTime } from "@/lib/format";
 import { ChapterEnd } from "./chapter-end";
 import styles from "./reader.module.css";
 
@@ -265,12 +265,6 @@ export function ChapterStream({
               <h2 id={`chapter-${chapter.position}`} className={styles.title}>
                 {chapter.title}
               </h2>
-              <p className={styles.meta}>
-                {t("reader.meta", {
-                  minutes: Math.max(1, Math.round(chapter.wordCount / 500)),
-                  words: formatNumber(chapter.wordCount),
-                })}
-              </p>
             </header>
             <div className={styles.text}>
               {chapter.paragraphs.map((paragraph, i) => (

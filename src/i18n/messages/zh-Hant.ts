@@ -87,7 +87,6 @@ const zhHant = {
     prev: "上一章",
     next: "下一章",
     caughtUp: "已追到最新進度",
-    meta: "約 {minutes} 分鐘・本章 {words} 字",
     endOf: "{title}・閱讀完畢",
     fontSmaller: "縮小字級",
     fontLarger: "放大字級",

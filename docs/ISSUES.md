@@ -100,6 +100,7 @@ Completed issues are moved here after checks and relevant desktop/mobile E2E pas
 - Status / priority: `DONE` / P1 (user report 2026-10-03)
 - Problem: the reader's top bar showed 「書名・章名」 as plain text; only the small book name above the chapter heading linked to the work page.
 - Resolution: in `reader-chrome.tsx` the book title links to `/works/[id]#directory` and the chapter title opens the in-reader TOC; each half truncates on its own. `chapter-directory.tsx` scrolls to `#directory` once it streams in (`scroll-margin-top` clears the sticky header).
+- Follow-up (user request): removed the chapter header's small book/author link and the reading time/word count; the chapter opens with only its title (and the note badge for author notes).
 - Also fixed while verifying: bookshelf and bookmark saves use `keepalive`, so leaving the page right after tapping no longer drops the save (this was the source of two flaky E2E runs).
 - Verification: `reading-experience.spec.ts` top-bar test on desktop and mobile; full suite 60/60 twice; real Chrome landed on the directory heading 122 px from the top.
 
