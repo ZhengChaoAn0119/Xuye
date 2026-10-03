@@ -1,12 +1,27 @@
 # Current handoff
 
-Updated: 2026-10-02 (Asia/Taipei)
+Updated: 2026-10-03 (Asia/Taipei)
 
 ## Current state
 
-- **Phases 0 through 4 are complete.** Readers can browse, read within rolling quotas, sign in, and synchronize preferences, bookshelf, progress, history, and bookmarks at http://localhost:3000 with `pnpm dev`.
-- Plan: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md`, including the new "Public reader site" section.
-- Pushed to `origin/main` on 2026-10-01. The first GitHub Actions run (#36880738989, commit `8292c11`) passed every job: "Lint, types, unit tests" (33 s), "Build and end-to-end tests" (84 s), and "Docker image builds" (72 s). Before pushing, the same three jobs were run locally from a clean clone, with no `.env`, and passed.
+- **Phases 0 through 4 are complete, plus a pre-Phase-5 reader/settings round (2026-10-02/03).** Readers can browse; read page by page or continuously within rolling quotas; switch palette and light/dark/system themes; sign in; manage `/settings`; and synchronize preferences, bookshelf, progress, history, and bookmarks. Run with `pnpm dev` at http://localhost:3000.
+- Plan: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md`. Issue board: `docs/ISSUES.md` (all items DONE except DOC-001 terms/consent and FUNC-004 followed-content backlog).
+- Branch `main`. Commits of this round, all pushed to `origin/main` on 2026-10-03:
+  - `2de5f0a` auto-load next chapter (FUNC-001) and header theme picker (UX-003); migration 0007.
+  - `22c17ec` quota reread grace (FUNC-003), paged/continuous modes (FUNC-002), continuous-reading DOM virtualization (PERF-001), settings center, display names, site dark mode, data export/deletion (UX-004); migrations 0008 and 0009.
+  - `50996d2` reader top bar links to the book directory and the chapter list (UX-005); `keepalive` saves.
+  - `d4ed94f` chapter header shows only the title (book/author link, reading time, word count removed).
+  - The handoff/docs commit that records this list.
+- Earlier: pushed 2026-10-01; the first GitHub Actions run (#36880738989, commit `8292c11`) passed lint/types/unit, build + E2E, and Docker image jobs. CI status of this round's push: see the latest Actions run for `main`.
+- **After pulling on another machine:** `pnpm install`, then `pnpm db:migrate` (0007–0009 are new), then `pnpm dev`.
+
+## Next steps
+
+1. Watch the GitHub Actions run for this push (E2E now has 60 tests, including the new `reading-experience.spec.ts`).
+2. DOC-001 (P0 before launch): terms of service and consent covering quota, account deletion, data export, and content rules.
+3. Open UX observations from the 2026-10-02 walkthrough that are still unaddressed: the floating reader toolbar overlaps body text at the bottom of the screen; an admin account is labelled 「免費會員」 on `/account`; the admin logo mark is 「序」 while the site mark is 「續」. (Resolved since: the light TOC drawer in the dark reader, and the email wrapping as the account heading.)
+4. Phase 5 launch preparation (see "Next steps (phase 5: launch preparation)" below): domain/host, Cloudflare/WAF, canonical URLs, sitemap, monitoring, backups, production secrets and mail/OAuth credentials.
+5. FUNC-004 (backlog): 「關注的資訊」 settings once update notifications or followed authors exist.
 
 ## Development machines
 
