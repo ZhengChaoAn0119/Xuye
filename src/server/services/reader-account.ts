@@ -128,6 +128,8 @@ export async function getAccountProfile(db: Database, userId: string) {
       name: users.name,
       email: users.email,
       tier: users.tier,
+      termsVersion: users.termsVersion,
+      termsAcceptedAt: users.termsAcceptedAt,
       birthDate: users.birthDate,
       ageVerifiedAt: users.ageVerifiedAt,
       createdAt: users.createdAt,

@@ -30,7 +30,7 @@ type ReaderChromeProps = {
   initialBookmarked: boolean;
 };
 
-/** Top bar, floating controls, and table of contents for the chapter reader. */
+/** Top bar, sticky settings row, and table of contents for the chapter reader. */
 export function ReaderChrome(props: ReaderChromeProps) {
   const { workId, workTitle, toc, signedIn } = props;
   const router = useRouter();

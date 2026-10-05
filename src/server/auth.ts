@@ -1,5 +1,8 @@
 import "server-only";
 import NextAuth, { type DefaultSession, type NextAuthConfig } from "next-auth";
+import { cookies } from "next/headers";
+import { TERMS_COOKIE } from "@/lib/terms";
+import { acceptTerms, validConsentIntent } from "./services/terms-consent";
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { serverEnv } from "@/env";
 import { configuredProviders } from "./auth-providers";
@@ -10,7 +13,12 @@ type UserRole = (typeof users.$inferSelect)["role"];
 
 declare module "next-auth" {
   interface Session {
-    user: { id: string; role: UserRole } & DefaultSession["user"];
+    user: {
+      id: string;
+      role: UserRole;
+      termsVersion: string | null;
+      termsAcceptedAt: string | null;
+    } & DefaultSession["user"];
   }
 }
 
@@ -35,10 +43,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth((): NextAuthConfig =
       error: "/auth-error",
     },
     providers: configuredProviders(env),
+    events: {
+      async signIn({ user, account }) {
+        const provider = account?.provider;
+        if (!user.id || !provider) return;
+        const jar = await cookies();
+        const token = jar.get(TERMS_COOKIE)?.value;
+        jar.delete(TERMS_COOKIE);
+        const email = provider === "nodemailer" ? (user.email ?? null) : null;
+        if (validConsentIntent(token, provider, email, env.AUTH_SECRET, new Date()))
+          await acceptTerms(getDb(), user.id, new Date());
+      },
+    },
     callbacks: {
       session({ session, user }) {
         session.user.id = user.id;
         session.user.role = (user as { role?: UserRole }).role ?? "reader";
+        const consent = user as { termsVersion?: string | null; termsAcceptedAt?: Date | null };
+        session.user.termsVersion = consent.termsVersion ?? null;
+        session.user.termsAcceptedAt = consent.termsAcceptedAt?.toISOString() ?? null;
         return session;
       },
     },

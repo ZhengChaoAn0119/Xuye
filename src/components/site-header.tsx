@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { t } from "@/i18n";
 import { displayNameFor } from "@/lib/display-name";
 import { getCurrentUser } from "@/server/authz";
+import { consentUrl } from "@/lib/terms";
 import { AccountMenu } from "./account-menu";
 import styles from "./site-header.module.css";
 import { SiteNav } from "./site-nav";
@@ -12,8 +13,12 @@ async function AccountSlot() {
   const user = await getCurrentUser();
   return (
     <>
-      <ThemePicker signedIn={Boolean(user)} />
-      {user ? (
+      <ThemePicker signedIn={Boolean(user?.termsAccepted)} />
+      {user && !user.termsAccepted ? (
+        <Link className={styles.account} href={consentUrl("/account")}>
+          {t("terms.confirmTitle")}
+        </Link>
+      ) : user ? (
         <AccountMenu
           name={displayNameFor(user)}
           email={user.email}
@@ -75,7 +80,8 @@ export function SiteFooter() {
         <span>{t("site.footer")}</span>
         <span>
           {t("site.tagline")}・<Link href="/settings">{t("settings.title")}</Link>・
-          <Link href="/privacy">{t("site.privacy")}</Link>
+          <Link href="/privacy">{t("site.privacy")}</Link>・
+          <Link href="/terms">{t("terms.title")}</Link>
         </span>
       </div>
     </footer>

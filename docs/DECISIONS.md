@@ -77,6 +77,17 @@ Update this file only for decisions that should survive tools, computers, branch
 
 ## Product and content
 
+### Terms, consent, and remaining UX (2026-10-05)
+
+- User direction: the brand mark is 「續」 everywhere, including the admin back office. Admin accounts display 「管理員」 on the account overview and profile settings; ordinary readers remain 「免費會員」. This is a role label, not a new paid tier or a change to quotas.
+- `/terms` and the updated `/privacy` are public and linked from the footer and sign-in forms. User explicitly chose default agreement with an opt-out: the checkbox starts checked, the choice and policy links are visible, and continuing without cancelling means agreement. Cancelling blocks the sign-in action on the server and remains cancelled on the resulting error page. Mere page views do not create an account consent record.
+- Consent applies only to the terms and processing needed for account/reading services. It does not authorize marketing or unrelated purposes or waive statutory data rights. Terms cover scope, account security, quotas/reread grace, content rights and restrictions, export/deletion, proportionate abuse handling, availability, updates, and disputes; there is no blanket liability waiver.
+- Migration `0010_nebulous_firelord.sql` adds nullable `users.terms_version` and `terms_accepted_at`. Successful authentication consumes a signed, HTTP-only, provider-bound intent (also bound to the normalized email for email login), then records version `2026-10-05` and the server acceptance time. Re-accepting the same version preserves its first time. Existing accounts are not backfilled as accepted.
+- `/consent` handles existing sessions missing the current agreement and magic links opened without the original browser's intent. It uses the same default agreement/opt-out design, validates the submitted choice on the server, then returns to the original destination. Account pages/actions/APIs and admin functions independently enforce current consent; export, deletion, privacy controls, policy pages, and sign-out remain available without accepting a new version.
+- UX-006: settings now occupy an opaque sticky row directly below the reader's top bar on desktop and mobile, leaving bottom text and chapter navigation unobstructed. Paged/continuous reading and quota triggers remain the same.
+- Before public launch, fill in the operator's legal name, public service/privacy/content-rights contact, actual provider locations, and retention/backup periods. Those are not invented in the test-version policies. Default agreement is the user's product choice, not a claim that silence establishes legally sufficient consent for every use or jurisdiction.
+- Drafting references checked against primary Taiwanese sources: [Personal Data Protection Act, articles 3, 7, and 8](https://law.pdpc.gov.tw/LawContent.aspx?id=FL010627) (rights, evidence of consent, notice; some 2025 amendments on that page are not yet effective) and [Consumer Protection Act, articles 11–12](https://www.ey.gov.tw/Page/4FF303AE95592945/f65a641d-d096-48c1-b357-435ac7786e72) (disclosure and unfair standard terms).
+
 - Traditional Chinese is the initial language.
 - Content is platform-operated at launch; there are no author accounts or submission tools.
 - Works may be ongoing or completed and contain chapter-based long or short fiction.

@@ -18,7 +18,7 @@ export function AdminNav({ email }: { email: string }) {
     <nav className={styles.sidebar} aria-label="管理後台導覽">
       <Link href="/admin" className={styles.brand}>
         <span className={styles.brandMark} aria-hidden="true">
-          序
+          續
         </span>
         管理後台
       </Link>

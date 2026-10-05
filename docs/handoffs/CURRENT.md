@@ -1,27 +1,38 @@
 # Current handoff
 
-Updated: 2026-10-03 (Asia/Taipei)
+Updated: 2026-10-05 (Asia/Taipei)
+
+## Terms and remaining UX round (2026-10-05, Codex)
+
+- Branch: `feat/launch-terms-ux`; based on `7c2a977`. User authorized commit and push on 2026-10-05; the resulting commit is available in this branch's Git history.
+- Confirmed the latest `main` CI run [37112639911](https://github.com/ZhengChaoAn0119/Xuye/actions/runs/37112639911) at `7c2a977`: lint/types/unit, standalone build/E2E, and both Docker image targets all passed (completed 2026-10-03).
+- DOC-001: public `/terms`, updated `/privacy`, footer links, default-checked opt-out choices in email/Google sign-in, server-side refusal handling, and versioned account consent. User explicitly requested implied/default agreement rather than an unchecked explicit opt-in. Consent is stored only after authentication or submission of `/consent`, never just on a page view. Same-device login proceeds without a second choice; legacy sessions and links opened on another device see `/consent`.
+- Migration **0010** adds nullable consent version/time to users. Run `pnpm db:migrate` after pulling; no legacy acceptance is backfilled. Guards independently block account/admin operations pending current consent, while export, deletion, privacy controls, policy pages, and sign-out remain usable. Export includes consent version/time.
+- UX-006: moved the reader toolbar from the floating bottom pill to an opaque sticky settings row below the top bar. UX-007: admin identity correctly displayed on `/account` and `/settings/profile`. UX-008: admin mark changed from 「序」 to 「續」 per user confirmation.
+- Affected files: `src/lib/terms.ts`, `src/server/services/terms-consent*`, auth/session/authorization plumbing, `src/server/db/schema/auth.ts`, `drizzle/0010*` + metadata, `src/app/(site)/{signin,consent,terms,account,settings}`, `/api/v1/me` and export, shared header/footer/i18n, reader chrome CSS, admin nav, account export service, and E2E support/terms/reading-experience.
+- Verification: `pnpm check` passed (95 unit tests); production standalone build passed; full production-build E2E **72/72 passed in 3.2 minutes, with retries disabled**, desktop Chrome + Pixel 7. Screenshots of terms, sign-in, consent, reader bottom text/navigation, account role, and admin branding were reviewed at both sizes. Tests used a fresh, isolated native PostgreSQL 18 cluster on `127.0.0.1:55435`, database `xuye_terms_e2e`, and Mailpit on `127.0.0.1:1025/8025`. No development database, existing server, or real content was used. This workspace has no `.env`.
+- Google form refusal was tested with local dummy provider configuration, without contacting Google; real OAuth login still requires production credentials. The Windows-managed webServer teardown hangs, so the final suite used the documented `E2E_EXTERNAL_SERVER=1` path against the isolated standalone server. Earlier new-test failures were fixed by scoping alerts to `main`, expecting the actual null signed-out session, and waiting for the declined checkbox state before resubmitting. All temporary app, Mailpit, and PostgreSQL services have been stopped.
+- Remaining launch inputs: operator legal name and public contact, actual processors/locations, retention and backup periods, then the Phase 5 domain/hosting/credentials/monitoring work. Google OAuth's real external provider flow still needs credentials; form consent logic is shared and email/legacy/cross-device paths are covered locally.
 
 ## Current state
 
 - **Phases 0 through 4 are complete, plus a pre-Phase-5 reader/settings round (2026-10-02/03).** Readers can browse; read page by page or continuously within rolling quotas; switch palette and light/dark/system themes; sign in; manage `/settings`; and synchronize preferences, bookshelf, progress, history, and bookmarks. Run with `pnpm dev` at http://localhost:3000.
-- Plan: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md`. Issue board: `docs/ISSUES.md` (all items DONE except DOC-001 terms/consent and FUNC-004 followed-content backlog).
-- Branch `main`. Commits of this round, all pushed to `origin/main` on 2026-10-03:
+- Plan: `docs/ARCHITECTURE.md` §7. Decisions: `docs/DECISIONS.md`. Issue board: `docs/ISSUES.md` (DOC-001 and UX-006/007/008 are now implemented; OPS-002 launch-policy inputs and FUNC-004 followed-content remain).
+- Baseline branch `main`. Commits of the earlier round, all pushed to `origin/main` on 2026-10-03:
   - `2de5f0a` auto-load next chapter (FUNC-001) and header theme picker (UX-003); migration 0007.
   - `22c17ec` quota reread grace (FUNC-003), paged/continuous modes (FUNC-002), continuous-reading DOM virtualization (PERF-001), settings center, display names, site dark mode, data export/deletion (UX-004); migrations 0008 and 0009.
   - `50996d2` reader top bar links to the book directory and the chapter list (UX-005); `keepalive` saves.
   - `d4ed94f` chapter header shows only the title (book/author link, reading time, word count removed).
   - The handoff/docs commit that records this list.
 - Earlier: pushed 2026-10-01; the first GitHub Actions run (#36880738989, commit `8292c11`) passed lint/types/unit, build + E2E, and Docker image jobs. CI status of this round's push: see the latest Actions run for `main`.
-- **After pulling on another machine:** `pnpm install`, then `pnpm db:migrate` (0007–0009 are new), then `pnpm dev`.
+- **After pulling this round on another machine:** `pnpm install`, then `pnpm db:migrate` (including new 0010), then `pnpm dev`.
 
 ## Next steps
 
-1. Watch the GitHub Actions run for this push (E2E now has 60 tests, including the new `reading-experience.spec.ts`).
-2. DOC-001 (P0 before launch): terms of service and consent covering quota, account deletion, data export, and content rules.
-3. Open UX observations from the 2026-10-02 walkthrough that are still unaddressed: the floating reader toolbar overlaps body text at the bottom of the screen; an admin account is labelled 「免費會員」 on `/account`; the admin logo mark is 「序」 while the site mark is 「續」. (Resolved since: the light TOC drawer in the dark reader, and the email wrapping as the account heading.)
-4. Phase 5 launch preparation (see "Next steps (phase 5: launch preparation)" below): domain/host, Cloudflare/WAF, canonical URLs, sitemap, monitoring, backups, production secrets and mail/OAuth credentials.
-5. FUNC-004 (backlog): 「關注的資訊」 settings once update notifications or followed authors exist.
+1. Verify CI for `feat/launch-terms-ux` where enabled, then review and merge when requested. The existing `main` CI is already confirmed successful; this revision has been verified locally.
+2. OPS-002 (P0 before launch): supply the operator's legal name, public service/privacy/content-rights contact, actual processors/locations, and retention/backup periods; replace the test-version policy placeholders.
+3. Phase 5 launch preparation (see "Next steps (phase 5: launch preparation)" below): domain/host, Cloudflare/WAF, canonical URLs, sitemap, monitoring, backups, production secrets and mail/OAuth credentials.
+4. FUNC-004 (backlog): 「關注的資訊」 settings once update notifications or followed authors exist.
 
 ## Development machines
 

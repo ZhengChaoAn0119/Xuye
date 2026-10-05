@@ -8,6 +8,8 @@ import { authProviderAvailability } from "@/server/auth-providers";
 import { getCurrentUser } from "@/server/authz";
 import { serverEnv } from "@/env";
 import styles from "./signin.module.css";
+import { TermsChoice } from "@/components/terms-choice";
+import { consentUrl } from "@/lib/terms";
 
 export const metadata: Metadata = { title: t("auth.signInTitle"), robots: { index: false } };
 
@@ -16,7 +18,8 @@ async function SignInPanel({ searchParams }: Pick<PageProps<"/signin">, "searchP
   const callbackUrl = safeCallbackUrl(
     Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : params.callbackUrl,
   );
-  if (await getCurrentUser()) redirect(callbackUrl as Route);
+  const user = await getCurrentUser();
+  if (user) redirect((user.termsAccepted ? callbackUrl : consentUrl(callbackUrl)) as Route);
   const providers = authProviderAvailability(serverEnv());
 
   return (
@@ -24,20 +27,41 @@ async function SignInPanel({ searchParams }: Pick<PageProps<"/signin">, "searchP
       <p className={styles.eyebrow}>{t("auth.eyebrow")}</p>
       <h1 id="signin-title">{t("auth.signInTitle")}</h1>
       <p className={styles.intro}>{t("auth.signInIntro")}</p>
-      {providers.google && (
-        <form action={googleSignIn.bind(null, callbackUrl)}>
-          <button className={styles.provider}>{t("auth.google")}</button>
-        </form>
+      {params.consent === "declined" && (
+        <p className={styles.notice} role="alert">
+          {t("terms.declined")}
+        </p>
       )}
-      {providers.email && (
-        <>
-          {providers.google && <div className={styles.divider}>{t("auth.orEmail")}</div>}
-          <form action={emailSignIn.bind(null, callbackUrl)} className={styles.form}>
-            <label htmlFor="email">{t("auth.email")}</label>
-            <input id="email" name="email" type="email" autoComplete="email" required />
-            <button className={styles.primary}>{t("auth.sendLink")}</button>
-          </form>
-        </>
+      {(providers.email || providers.google) && (
+        <form
+          action={
+            providers.email
+              ? emailSignIn.bind(null, callbackUrl)
+              : googleSignIn.bind(null, callbackUrl)
+          }
+          className={styles.form}
+        >
+          {providers.email && (
+            <>
+              <label htmlFor="email">{t("auth.email")}</label>
+              <input id="email" name="email" type="email" autoComplete="email" required />
+            </>
+          )}
+          <TermsChoice defaultAgreed={params.consent !== "declined"} />
+          {providers.email && <button className={styles.primary}>{t("auth.sendLink")}</button>}
+          {providers.google && (
+            <>
+              {providers.email && <div className={styles.divider}>{t("auth.orGoogle")}</div>}
+              <button
+                className={styles.provider}
+                formAction={googleSignIn.bind(null, callbackUrl)}
+                formNoValidate
+              >
+                {t("auth.google")}
+              </button>
+            </>
+          )}
+        </form>
       )}
       {!providers.email && !providers.google && (
         <p className={styles.notice}>{t("auth.unavailable")}</p>

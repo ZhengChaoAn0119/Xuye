@@ -81,6 +81,24 @@ test("paged reading keeps chapter buttons and never loads ahead", async ({ page 
   await expect(page.getByRole("dialog", { name: "選擇閱讀方式" })).toBeHidden();
 });
 
+test("reader settings stay below the top bar and leave bottom text unobstructed", async ({
+  page,
+}, testInfo) => {
+  await openChapterAndChoose(page, "翻頁閱讀");
+  await page.keyboard.press("PageDown");
+  const toolbar = page.getByRole("toolbar", { name: "閱讀設定" });
+  await expect(toolbar).toBeInViewport();
+  const bounds = await toolbar.boundingBox();
+  expect(bounds!.y).toBe(56);
+  expect(bounds!.y + bounds!.height).toBeLessThan(120);
+  await readToTheEnd(page);
+  const lastParagraph = page.getByText("第 1 章的段落 60，連續閱讀測試內文。");
+  await expect(lastParagraph).toBeInViewport();
+  await expect(page.getByRole("link", { name: /下一章/ })).toBeInViewport();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: testInfo.outputPath("reader-toolbar.png") });
+});
+
 test("the reader's top bar leads to the work directory and the chapter list", async ({ page }) => {
   await openChapterAndChoose(page, "翻頁閱讀");
   const topBar = page.locator("header").first();

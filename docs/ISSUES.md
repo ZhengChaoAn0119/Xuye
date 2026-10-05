@@ -13,6 +13,8 @@ This file is the repository-local source of truth for product, UI/UX, content, a
 
 Statuses: `BACKLOG`, `READY`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 
+2026-10-05 · Codex completed DOC-001, UX-006, UX-007, and UX-008. User confirmed the mark is 「續」 and requested default agreement with an opt-out. Verification: `pnpm check` (95 unit tests), production build, 72/72 desktop/mobile E2E with no retries, and responsive screenshots. Missing launch-policy inputs are tracked separately as OPS-002.
+
 ## Active board
 
 | ID       | Category           | Priority | Status  | Owner               | Parallel group | Summary                                                                                                                                | File scope / dependency                                                  |
@@ -26,11 +28,12 @@ Statuses: `BACKLOG`, `READY`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | FUNC-002 | Reader             | P1       | DONE    | Claude · 2026-10-02 | reader         | Separate paged and continuous reading, chosen on first entering the reader and changeable later.                                       | `reading-mode-prompt`, `chapter-end`, `chapter-stream`, prefs, 0008/0009 |
 | PERF-001 | Reader             | P1       | DONE    | Claude · 2026-10-02 | reader         | Release DOM of far-away continuous chapters without refetching; cap page text memory at 30 chapters.                                   | `chapter-stream`, `reader.module.css`                                    |
 | UX-004   | Settings           | P1       | DONE    | Claude · 2026-10-02 | settings       | 「我的」 menu for broad items; `/settings` categories; display name (paid only); site dark mode; remembered browsing; export/delete.   | `settings/*`, `account*`, `tokens.css`, me APIs                          |
-| DOC-001  | Legal              | P0       | READY   | —                   | legal          | Terms of service and consent that protect the operator (account deletion, data export, quota, content rules) before public launch.     | `/terms` page, sign-in consent, DECISIONS                                |
-| UX-006   | Reader             | P2       | BACKLOG | —                   | reader         | The floating reader toolbar overlaps body text at the bottom of the screen (2026-10-02 walkthrough).                                   | `reader-chrome.module.css`, reader padding                               |
-| UX-007   | Account            | P3       | BACKLOG | —                   | account        | Admin accounts are labelled 「免費會員」 on `/account`; show the role or tier accurately.                                              | `account/page.tsx`, i18n                                                 |
-| UX-008   | Branding           | P3       | BACKLOG | —                   | admin          | Admin logo mark is 「序」 while the site mark is 「續」; confirm whether intentional.                                                  | `admin/layout.tsx`, `site-header.tsx`                                    |
+| DOC-001  | Legal              | P0       | DONE    | Codex · 2026-10-05  | legal          | Terms of service and consent that protect the operator (account deletion, data export, quota, content rules) before public launch.     | `/terms` page, sign-in consent, DECISIONS                                |
+| UX-006   | Reader             | P2       | DONE    | Codex · 2026-10-05  | reader         | The floating reader toolbar overlaps body text at the bottom of the screen (2026-10-02 walkthrough).                                   | `reader-chrome.module.css`, reader padding                               |
+| UX-007   | Account            | P3       | DONE    | Codex · 2026-10-05  | account        | Admin accounts are labelled 「免費會員」 on `/account`; show the role or tier accurately.                                              | `account/page.tsx`, i18n                                                 |
+| UX-008   | Branding           | P3       | DONE    | Codex · 2026-10-05  | admin          | Admin logo mark is 「序」 while the site mark is 「續」; confirm whether intentional.                                                  | `admin/layout.tsx`, `site-header.tsx`                                    |
 | FUNC-004 | Settings           | P2       | BACKLOG | —                   | settings       | 「關注的資訊」: update notifications and followed authors, as a settings section once the features exist.                              | settings, notifications (not built)                                      |
+| OPS-002  | Launch policy      | P0       | READY   | —                   | launch         | Replace test-version operator/contact, processor locations, and retention/backup placeholders before public launch.                    | i18n terms/privacy, hosting decisions                                    |
 
 ## Intake by category
 
@@ -79,6 +82,28 @@ Statuses: `BACKLOG`, `READY`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 ## Completed log
 
 Completed issues are moved here after checks and relevant desktop/mobile E2E pass.
+
+### DOC-001 · Terms and account consent
+
+- Resolution (2026-10-05): public `/terms`, updated `/privacy`, footer/sign-in links, and user-directed default agreement with a visible opt-out shared by email and Google. Server actions reject refusal; successful authentication consumes a signed intent and stores the current version/time. Existing accounts and cross-device magic links use `/consent`; no legacy acceptance is fabricated. Export, deletion, and sign-out remain available when a new version is refused.
+- Migration: `0010_nebulous_firelord.sql` adds nullable consent fields. Policy text is still a pre-launch test version; operator identity/contact, processors/locations, and retention/backup periods must be supplied before launch.
+- Verification: `pnpm check` (95 unit tests), standalone production build, full desktop Chrome + Pixel 7 E2E 72/72 with no retries, and responsive screenshots. `terms.spec.ts` covers default agreement, email/Google refusal, persisted version/time, legacy guards/data rights, and cross-device links; Google uses local dummy credentials only for refusal.
+
+### UX-006 · Reader toolbar obscures bottom text
+
+- Resolution (2026-10-05): the settings toolbar is now an opaque sticky row below the reader top bar on desktop/mobile. No control floats over the bottom paragraphs or chapter navigation.
+- Verification: `reading-experience.spec.ts` checks its position, visible final paragraph/navigation, and horizontal overflow; responsive screenshots reviewed. Paged, continuous, chapter directory, and preference flows are also covered.
+
+### UX-007 · Admin account identity
+
+- Resolution (2026-10-05): `/account` and `/settings/profile` show 「管理員」 for admin roles; ordinary Free readers still show 「免費會員」. No quota or paid-tier behavior changed.
+- Verification: `terms.spec.ts` checks the label before/after promotion through a real email-authenticated session; full desktop/mobile E2E 72/72 and screenshots passed.
+
+### UX-008 · Admin brand mark
+
+- Decision (user, 2026-10-05): the mark is 「續」, not 「序」.
+- Resolution: `src/app/admin/admin-nav.tsx` now matches the public header.
+- Verification: `terms.spec.ts` checks the rendered admin brand; desktop/mobile screenshots reviewed.
 
 ### OPS-001 · Node user lookup fails in the managed Windows sandbox
 

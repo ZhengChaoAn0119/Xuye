@@ -4,7 +4,7 @@ import { exportAccountData } from "@/server/services/reader-account";
 
 /** "Download my data": profile, preferences, bookshelf, progress, and bookmarks as JSON. */
 export async function GET() {
-  const user = await userOrResponse();
+  const user = await userOrResponse({ allowUnaccepted: true });
   if (user instanceof Response) return user;
   const now = new Date();
   const data = await exportAccountData(getDb(), user.id, now);

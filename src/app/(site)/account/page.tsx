@@ -33,7 +33,7 @@ async function AccountContent() {
         </span>
         <h2>{name}</h2>
         <p>{profile.email}</p>
-        <strong>{t("account.freeTier")}</strong>
+        <strong>{t(user.role === "admin" ? "account.adminRole" : "account.freeTier")}</strong>
         <Link className={styles.profileLink} href="/settings/profile">
           {t("account.editProfile")}
         </Link>

@@ -5,7 +5,7 @@ import { e2eDatabaseUrl, MAILPIT_URL } from "./env";
 export const uniqueEmail = (prefix: string) =>
   `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}@xuye.localhost`;
 
-async function waitForMagicLink(request: APIRequestContext, email: string): Promise<string> {
+export async function waitForMagicLink(request: APIRequestContext, email: string): Promise<string> {
   for (let attempt = 0; attempt < 30; attempt++) {
     const search = await request.get(`${MAILPIT_URL}/api/v1/search`, {
       params: { query: `to:"${email}"` },
@@ -29,6 +29,7 @@ export async function signIn(page: Page, email: string) {
   await page.getByRole("button", { name: "寄送登入連結" }).click();
   await expect(page).toHaveURL(/\/verify-request/);
   await page.goto(await waitForMagicLink(page.request, email));
+  await expect(page).not.toHaveURL(/\/consent/);
 }
 
 export const uniqueTitle = (prefix: string) =>

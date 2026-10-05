@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { t } from "@/i18n";
 import { getCurrentUser, type CurrentUser } from "@/server/authz";
 import styles from "./settings-layout.module.css";
+import { redirect } from "next/navigation";
+import { consentUrl } from "@/lib/terms";
 
 /** Renders an account-only settings section, or a sign-in prompt for visitors. */
 export async function SignedIn({
@@ -21,6 +23,7 @@ export async function SignedIn({
       </div>
     );
   }
+  if (!user.termsAccepted && path !== "/settings/privacy") redirect(consentUrl(path));
   return children(user);
 }
 
@@ -30,7 +33,7 @@ export async function DeviceSettings({ children }: { children: (signedIn: boolea
   return (
     <>
       {!user && <p className={styles.visitorNote}>{t("settings.visitorNote")}</p>}
-      {children(Boolean(user))}
+      {children(Boolean(user?.termsAccepted))}
     </>
   );
 }

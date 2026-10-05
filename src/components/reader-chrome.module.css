@@ -61,18 +61,16 @@
 }
 
 .controls {
-  position: fixed;
+  position: sticky;
   z-index: 40;
-  left: 50%;
-  bottom: 16px;
-  transform: translateX(-50%);
+  top: 56px;
+  width: 100%;
   display: flex;
+  justify-content: center;
   gap: 4px;
   padding: 6px;
-  border-radius: var(--radius-pill);
-  border: 1px solid color-mix(in srgb, var(--reader-ink) 14%, transparent);
-  background: color-mix(in srgb, var(--reader-bg) 94%, transparent);
-  box-shadow: var(--shadow-panel);
+  border-bottom: 1px solid color-mix(in srgb, var(--reader-ink) 14%, transparent);
+  background: var(--reader-bg);
   font-family: var(--font-ui);
 }
 

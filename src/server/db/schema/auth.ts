@@ -35,6 +35,8 @@ export const users = pgTable("users", {
   tier: userTier("tier").notNull().default("free"),
   birthDate: date("birth_date"),
   ageVerifiedAt: timestamp("age_verified_at", { mode: "date", withTimezone: true }),
+  termsVersion: text("terms_version"),
+  termsAcceptedAt: timestamp("terms_accepted_at", { mode: "date", withTimezone: true }),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true }).notNull().defaultNow(),
   suspendedAt: timestamp("suspended_at", { mode: "date", withTimezone: true }),
 });

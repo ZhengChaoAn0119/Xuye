@@ -7,7 +7,7 @@ const schema = z.object({ confirmEmail: z.string() });
 
 /** Deletes the signed-in reader's account after they retype their email address. */
 export async function DELETE(request: Request) {
-  const user = await userOrResponse();
+  const user = await userOrResponse({ allowUnaccepted: true });
   if (user instanceof Response) return user;
   const parsed = schema.safeParse(await request.json().catch(() => null));
   const typed = parsed.success ? parsed.data.confirmEmail.trim().toLowerCase() : "";

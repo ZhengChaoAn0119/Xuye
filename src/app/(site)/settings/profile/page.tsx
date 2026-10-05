@@ -21,7 +21,7 @@ export default function ProfileSettingsPage() {
             <ProfileSettings
               displayName={displayNameFor(profile)}
               email={profile.email}
-              tierLabel={t("account.freeTier")}
+              tierLabel={t(user.role === "admin" ? "account.adminRole" : "account.freeTier")}
               joinedAt={formatDateTime(profile.createdAt)}
               canChangeName={canChangeDisplayName(profile.tier)}
             />

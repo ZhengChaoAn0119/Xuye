@@ -22,7 +22,7 @@ export const viewport: Viewport = {
 
 async function PreferenceSyncSlot() {
   const user = await getCurrentUser();
-  if (!user) return null;
+  if (!user?.termsAccepted) return null;
   const state = await getReaderPreferences(getDb(), user.id);
   return <AccountPreferenceSync {...state} />;
 }
