@@ -38,7 +38,7 @@ async function WorkDetail({ params }: Pick<PageProps<"/works/[id]">, "params">) 
   const work = await loadWork(params);
   if (!work) notFound();
 
-  const { user, preferences } = await getRequestReader();
+  const { user, preferences } = await getRequestReader(`/works/${work.id}`);
   const allowed = contentAllowed(work, preferences);
   const accountState = user
     ? await getWorkAccountState(getDb(), user.id, work.id)

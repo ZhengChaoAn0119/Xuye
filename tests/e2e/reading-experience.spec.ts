@@ -1,12 +1,74 @@
 import { expect, test, type Page } from "@playwright/test";
 import { buildTestEpub } from "@/server/content/fixtures";
 import { promoteToAdmin, signIn, uniqueEmail, uniqueTitle } from "./support";
+import postgres from "postgres";
+import { e2eDatabaseUrl } from "./env";
+import { consentUrl } from "@/lib/terms";
 
 // This file exercises first-visit behavior, so readers start without any saved preferences.
 test.use({ storageState: { cookies: [], origins: [] } });
 
 let work: { id: number; title: string };
 const CHAPTERS = 6;
+
+test("consent returns readers to their work, chapter, and search", async ({ page }) => {
+  const email = uniqueEmail("consent-return");
+  await signIn(page, email);
+  const sql = postgres(e2eDatabaseUrl(), { max: 1 });
+  try {
+    for (const destination of [
+      `/works/${work.id}`,
+      `/works/${work.id}/chapters/2`,
+      `/search?q=${encodeURIComponent(work.title)}`,
+    ]) {
+      await sql`update users set terms_version = null, terms_accepted_at = null where email = ${email}`;
+      await page.goto(destination);
+      await expect(page).toHaveURL(
+        new RegExp(
+          `/consent\\?callbackUrl=${encodeURIComponent(destination).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+        ),
+      );
+      await expect(page.getByRole("heading", { name: "確認使用條款" })).toBeVisible();
+      await page.getByRole("button", { name: "繼續使用", exact: true }).click();
+      await expect
+        .poll(() => new URL(page.url()).pathname + new URL(page.url()).search)
+        .toBe(destination);
+      await expect(page.getByRole("heading", { name: "確認使用條款" })).toHaveCount(0);
+    }
+  } finally {
+    await sql.end();
+  }
+});
+
+test("continuous reading offers consent without discarding loaded text", async ({ page }) => {
+  const email = uniqueEmail("stream-consent");
+  await signIn(page, email);
+  await openChapterAndChoose(page, "連續閱讀");
+  const sql = postgres(e2eDatabaseUrl(), { max: 1 });
+  try {
+    await sql`update users set terms_version = null, terms_accepted_at = null where email = ${email}`;
+    const response = await page.request.get(`/api/v1/works/${work.id}/chapters/2`);
+    expect(response.status()).toBe(403);
+    expect(response.headers()["cache-control"]).toBe("no-store");
+    expect(await response.json()).toEqual({
+      status: "terms_required",
+      consentUrl: consentUrl(`/works/${work.id}/chapters/2`),
+    });
+    await readToTheEnd(page);
+    const prompt = page
+      .getByRole("note")
+      .filter({ has: page.getByRole("heading", { name: "確認使用條款" }) });
+    await expect(prompt).toBeVisible();
+    await expect(page.getByText("第 1 章的段落 60，連續閱讀測試內文。")).toBeVisible();
+    await prompt.getByRole("link", { name: "繼續使用" }).click();
+    await expect(page.getByRole("heading", { name: "確認使用條款" })).toBeVisible();
+    await page.getByRole("button", { name: "繼續使用", exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`/works/${work.id}/chapters/2$`));
+    await expect(page.getByText("第 2 章的段落 1，連續閱讀測試內文。")).toBeVisible();
+  } finally {
+    await sql.end();
+  }
+});
 
 // Long enough chapters that each one needs scrolling on desktop and mobile.
 const lines = (chapter: number) =>

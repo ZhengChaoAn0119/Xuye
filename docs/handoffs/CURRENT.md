@@ -1,6 +1,20 @@
 # Current handoff
 
-Updated: 2026-10-05 (Asia/Taipei)
+Updated: 2026-10-06 (Asia/Taipei)
+
+## Merge review (2026-10-06, Codex)
+
+### Fixes and merge preparation
+
+- User authorized fixing the review findings and merging to `main`. Both P2 findings are resolved on `feat/launch-terms-ux`: work/chapter/search pages pass their destination into the consent guard; the chapter API returns uncached HTTP 403 JSON with `status: terms_required` and the requested chapter's consent URL. Continuous reading displays a confirmation link while keeping loaded text visible; confirmation resumes at the requested chapter. No new dependencies or migration changes.
+- Affected files/routes: `src/server/reader.ts`, work/search/chapter pages, chapter API, `chapter-stream.tsx`, and `tests/e2e/reading-experience.spec.ts`. Regression tests exercise work/chapter/search returns and consent becoming outdated during continuous reading, including JSON status/cache headers and the full confirmation/return path.
+- Verification after fixes: `pnpm check` passed (95 unit tests); `pnpm build` passed; full production-server E2E with retries disabled passed **74 tests**, with **2 Google-only tests skipped** because Google credentials are not configured (76 total, desktop Chrome + Pixel 7, 2.9 minutes). Isolated database: `xuye_review_e2e`, PostgreSQL on `127.0.0.1:55435`; Mailpit on `127.0.0.1:1025/8025`. No development database or real content used. `git diff --check` passed.
+- Integration: fast-forward `main` from `7c2a977` to the branch's repair commit and push both branches after these checks. No review blockers remain. Deployment still requires migration 0010; operator/policy placeholders and real Google OAuth verification remain launch prerequisites. The original review below records the findings before repair.
+
+- Reviewed `main` (`7c2a977`) through `feat/launch-terms-ux` (`0157ded`); no application code changed and no merge or push performed.
+- Recommendation: fix two P2 consent navigation issues before merging. `src/server/reader.ts:11` always redirects to consent with `/` as the destination, losing work/chapter/search navigation. The same helper is called by the chapter JSON API; its redirect is followed as HTML by `chapter-stream.tsx`, which converts JSON parse failure into a generic loading failure rather than guiding the reader through consent. This is relevant when consent becomes outdated during an open reading session.
+- Verification this review: `pnpm check` passed (95 unit tests), `pnpm build` passed, and `git diff --check main...HEAD` passed. E2E was not rerun: this workspace has no `.env` and the expected PostgreSQL/Mailpit ports were not listening. The previous handoff reports 72/72 E2E passes for this commit; that suite does not cover these two cases.
+- Next: preserve the requested reader destination, return a structured consent-required API response and handle it in continuous reading, add regression coverage, then rerun desktop/mobile E2E and review for merge. Migration 0010 is required on deployment; public policy/operator placeholders remain a launch prerequisite.
 
 ## Terms and remaining UX round (2026-10-05, Codex)
 

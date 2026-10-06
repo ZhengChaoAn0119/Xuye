@@ -1,6 +1,7 @@
 import { getWork, readChapterBody } from "@/server/catalog";
 import { getDb } from "@/server/db";
-import { getRequestReader } from "@/server/reader";
+import { getRequestReaderState } from "@/server/reader";
+import { consentUrl } from "@/lib/terms";
 import { getReadIdentity } from "@/server/request-identity";
 import { neighbors } from "@/server/services/catalog";
 import { contentAllowed, getChapterAccountState } from "@/server/services/reader-account";
@@ -28,7 +29,12 @@ export async function GET(
   if (!work || !entry)
     return Response.json({ status: "not_found" }, { status: 404, headers: noStore });
 
-  const { user, preferences } = await getRequestReader();
+  const { user, preferences } = await getRequestReaderState();
+  if (user && !user.termsAccepted)
+    return Response.json(
+      { status: "terms_required", consentUrl: consentUrl(`/works/${workId}/chapters/${pos}`) },
+      { status: 403, headers: noStore },
+    );
   if (!contentAllowed(work, preferences))
     return Response.json({ status: "restricted" }, { status: 403, headers: noStore });
 
