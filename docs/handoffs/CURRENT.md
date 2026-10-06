@@ -2,6 +2,25 @@
 
 Updated: 2026-10-06 (Asia/Taipei)
 
+## Domain and contact mailbox (2026-10-06, Claude)
+
+- User bought `chaoanstudio.com` through Cloudflare Registrar, so DNS is already on Cloudflare. The Xuye site will be served from a subdomain; the subdomain name and the hosting platform are still undecided.
+- Cloudflare Email Routing forwards `xuye@chaoanstudio.com` to the operator's Gmail. A test message was received. This address is the planned public contact for OPS-002. It only receives mail: replies from Gmail show the Gmail address, and the site's login-mail sender is still to be set up (Resend, or Cloudflare Email Sending, which is in beta).
+- No application code changed. The terms and privacy copy (`src/i18n/messages/zh-Hant.ts`, `contactBody` and the rights paragraph) still contain the pre-launch contact placeholder. Replace it together with the operator's legal name and the other OPS-002 inputs.
+- Decisions this session (recorded in `docs/DECISIONS.md`): the site URL is `https://xuye.chaoanstudio.com`. The user wants to try self-hosting first: Docker Compose on a home machine behind Cloudflare Tunnel, with Cloudflare providing HTTPS and the WAF and no router changes needed. `src/server/request-identity.ts` already reads `cf-connecting-ip`, so quota and rate limits see real client IPs through the tunnel.
+- Open questions for the user:
+  1. Which machine will be the server: this Windows PC with Docker Desktop, or another one?
+  2. Can it stay on 24/7?
+  3. What is the operator's legal name (OPS-002)?
+  4. How long should data and backups be kept?
+- Next steps, in order:
+  1. Write a production compose file. The current `docker-compose.yml` is local-only: it hardcodes the `xuye:xuye` database password, publishes the database port, uses Mailpit, and sets `AUTH_URL=http://localhost:3000`. The production file needs app, db, migrate, and `cloudflared`; a strong database password with no published database port; `AUTH_URL=https://xuye.chaoanstudio.com`; separate `AUTH_SECRET` and `VISITOR_ID_SECRET` values; and a real `EMAIL_SERVER`/`EMAIL_FROM`.
+  2. Guide the user through creating the tunnel in Cloudflare Zero Trust (Networks → Tunnels) with a public hostname from `xuye.chaoanstudio.com` to `http://app:3000`.
+  3. Choose the login-mail provider: Resend, or Cloudflare Email Sending (beta, visible in the dashboard). Add its SPF, DKIM, and DMARC records.
+  4. Prepare the host: disable sleep, auto-start Docker Desktop and the stack, set Windows Update active hours, and run a daily `pg_dump` with an off-machine copy.
+  5. Set `metadataBase`, canonical URLs, and a sitemap for the domain; add the Google OAuth redirect URI `https://xuye.chaoanstudio.com/api/auth/callback/google`.
+- The user is new to domains and hosting. Give step-by-step guidance in Traditional Chinese and ask for screenshots of the Cloudflare dashboard. The latest GitHub CI for `main` has still not been checked.
+
 ## Device offline handoff (2026-10-06, Codex)
 
 - This device is going offline. Continue from `main`; the consent/reader fixes are merged and pushed at `3f7c750`. A fresh `git fetch origin` confirmed local `main` and GitHub `origin/main` match before this documentation update, with a clean worktree.
@@ -54,7 +73,7 @@ Updated: 2026-10-06 (Asia/Taipei)
 
 1. The consent/reader fixes are merged and pushed to `main` at `3f7c750`. Check the latest GitHub `main` CI when online; the revision has already passed local checks, build, and desktop/mobile E2E.
 2. OPS-002 (P0 before launch): supply the operator's legal name, public service/privacy/content-rights contact, actual processors/locations, and retention/backup periods; replace the test-version policy placeholders.
-3. Phase 5 launch preparation (see "Next steps (phase 5: launch preparation)" below): domain/host, Cloudflare/WAF, canonical URLs, sitemap, monitoring, backups, production secrets and mail/OAuth credentials.
+3. Phase 5 launch preparation: the domain is decided (`xuye.chaoanstudio.com`) and self-hosting behind Cloudflare Tunnel is the tentative host; see "Domain and contact mailbox" above. Remaining work is in "Next steps (phase 5: launch preparation)" below: Cloudflare/WAF, canonical URLs, sitemap, monitoring, backups, production secrets and mail/OAuth credentials.
 4. FUNC-004 (backlog): 「關注的資訊」 settings once update notifications or followed authors exist.
 
 ## Development machines
