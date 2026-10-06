@@ -2,6 +2,15 @@
 
 Updated: 2026-10-06 (Asia/Taipei)
 
+## Device offline handoff (2026-10-06, Codex)
+
+- This device is going offline. Continue from `main`; the consent/reader fixes are merged and pushed at `3f7c750`. A fresh `git fetch origin` confirmed local `main` and GitHub `origin/main` match before this documentation update, with a clean worktree.
+- This handoff is maintained in `docs/handoffs/CURRENT.md` (the repository's canonical handoff). This round changes documentation only; no routes, application behavior, dependencies, or migrations changed.
+- Verification for this documentation update: `pnpm check` passed (lint, formatting, typecheck, and 95 unit tests); `git diff --check` passed. Commit and push to `origin/main`, fetch again, and verify matching commit IDs and a clean worktree. The commit containing this section is the offline checkpoint.
+- Resume on another device: `git pull --ff-only origin main`, `pnpm install`, configure that device's local `.env`, start PostgreSQL/Mailpit, and run `pnpm db:migrate` (including **0010**). In the managed Codex Windows sandbox, dot-source `. .\scripts\enable-codex-shell.ps1` before pnpm commands. This workspace has no `.env`; secrets are not transferred through Git.
+- Latest application verification remains: 95 unit tests, production build, 74 desktop/mobile E2E passes and 2 Google-only skips. No application build/E2E rerun is needed for this documentation-only checkpoint. Latest GitHub CI status remains to be checked on the next online session.
+- Next priority: Phase 5 launch preparation. Supply OPS-002 operator/contact, processor/location, and retention/backup inputs; choose domain/hosting; configure production mail/OAuth/secrets, WAF, SEO, monitoring, and backups. Real Google OAuth remains unverified without credentials. FUNC-004 followed-author/update notifications stays in backlog.
+
 ## Merge review (2026-10-06, Codex)
 
 ### Fixes and merge preparation
@@ -43,7 +52,7 @@ Updated: 2026-10-06 (Asia/Taipei)
 
 ## Next steps
 
-1. Verify CI for `feat/launch-terms-ux` where enabled, then review and merge when requested. The existing `main` CI is already confirmed successful; this revision has been verified locally.
+1. The consent/reader fixes are merged and pushed to `main` at `3f7c750`. Check the latest GitHub `main` CI when online; the revision has already passed local checks, build, and desktop/mobile E2E.
 2. OPS-002 (P0 before launch): supply the operator's legal name, public service/privacy/content-rights contact, actual processors/locations, and retention/backup periods; replace the test-version policy placeholders.
 3. Phase 5 launch preparation (see "Next steps (phase 5: launch preparation)" below): domain/host, Cloudflare/WAF, canonical URLs, sitemap, monitoring, backups, production secrets and mail/OAuth credentials.
 4. FUNC-004 (backlog): 「關注的資訊」 settings once update notifications or followed authors exist.
