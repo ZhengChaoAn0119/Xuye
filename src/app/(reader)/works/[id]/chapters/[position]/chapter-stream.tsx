@@ -8,7 +8,6 @@ import { t } from "@/i18n";
 import { formatDateTime } from "@/lib/format";
 import { ChapterEnd } from "./chapter-end";
 import styles from "./reader.module.css";
-import { consentUrl } from "@/lib/terms";
 
 type StreamChapter = ActiveChapter & {
   kind: "chapter" | "note";
@@ -21,7 +20,6 @@ type StreamState =
   | { kind: "idle" }
   | { kind: "loading" }
   | { kind: "limited"; reason: "quota" | "rate"; retryAt: string }
-  | { kind: "terms"; position: number }
   | { kind: "failed" };
 
 type ChapterResponse =
@@ -84,10 +82,6 @@ export function ChapterStream({
       try {
         const response = await fetch(`/api/v1/works/${workId}/chapters/${position}`);
         const data = (await response.json().catch(() => null)) as ChapterResponse | null;
-        if (response.status === 403 && data?.status === "terms_required") {
-          setState({ kind: "terms", position });
-          return null;
-        }
         return data ?? { status: "failed" };
       } catch {
         return { status: "failed" };
@@ -286,19 +280,6 @@ export function ChapterStream({
       })}
       <div ref={sentinelRef} className={styles.streamStatus} aria-live="polite">
         {state.kind === "loading" && <p className={styles.meta}>{t("reader.autoLoading")}</p>}
-        {state.kind === "terms" && (
-          <section className={styles.restricted} role="note">
-            <h2>{t("terms.confirmTitle")}</h2>
-            <p>{t("terms.confirmIntro")}</p>
-            <Link
-              className={styles.button}
-              href={consentUrl(`/works/${workId}/chapters/${state.position}`)}
-              prefetch={false}
-            >
-              {t("terms.continue")}
-            </Link>
-          </section>
-        )}
         {state.kind === "failed" && (
           <p className={styles.meta}>
             {t("reader.autoFailed")}{" "}

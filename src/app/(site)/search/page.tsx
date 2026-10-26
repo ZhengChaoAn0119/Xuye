@@ -37,10 +37,7 @@ async function SearchForm({ searchParams }: Pick<PageProps<"/search">, "searchPa
 
 async function SearchResults({ searchParams }: Pick<PageProps<"/search">, "searchParams">) {
   const query = queryOf((await searchParams).q);
-  const [works, { preferences }] = await Promise.all([
-    searchCatalog(query),
-    getRequestReader(`/search${query ? `?q=${encodeURIComponent(query)}` : ""}`),
-  ]);
+  const [works, { preferences }] = await Promise.all([searchCatalog(query), getRequestReader()]);
   const visible = works.filter((work) => contentAllowed(work, preferences));
   return (
     <>

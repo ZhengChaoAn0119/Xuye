@@ -91,6 +91,18 @@
   background: var(--surface);
 }
 
+.terms {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.terms a {
+  color: var(--brand);
+  text-decoration: underline;
+}
+
 .divider {
   margin: 18px 0;
   display: flex;

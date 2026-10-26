@@ -29,7 +29,7 @@ export async function signIn(page: Page, email: string) {
   await page.getByRole("button", { name: "寄送登入連結" }).click();
   await expect(page).toHaveURL(/\/verify-request/);
   await page.goto(await waitForMagicLink(page.request, email));
-  await expect(page).not.toHaveURL(/\/consent/);
+  await expect(page).not.toHaveURL(/\/verify-request|\/auth-error/);
 }
 
 export const uniqueTitle = (prefix: string) =>

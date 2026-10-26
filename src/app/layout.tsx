@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Suspense } from "react";
 import { AccountPreferenceSync } from "@/components/account-preference-sync";
+import { PolicyBanner } from "@/components/policy-banner";
 import { SITE_BOOT_SCRIPT } from "@/components/reader-prefs";
 import { defaultLocale, t } from "@/i18n";
 import { getCurrentUser } from "@/server/authz";
@@ -22,9 +23,15 @@ export const viewport: Viewport = {
 
 async function PreferenceSyncSlot() {
   const user = await getCurrentUser();
-  if (!user?.termsAccepted) return null;
+  if (!user) return null;
   const state = await getReaderPreferences(getDb(), user.id);
   return <AccountPreferenceSync {...state} />;
+}
+
+async function PolicyBannerSlot() {
+  const user = await getCurrentUser();
+  if (user?.termsAccepted) return null;
+  return <PolicyBanner userId={user?.id ?? null} />;
 }
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -40,6 +47,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           <PreferenceSyncSlot />
         </Suspense>
         {children}
+        <Suspense fallback={null}>
+          <PolicyBannerSlot />
+        </Suspense>
       </body>
     </html>
   );

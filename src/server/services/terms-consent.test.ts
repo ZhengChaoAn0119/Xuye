@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { hasAcceptedTerms, TERMS_VERSION } from "@/lib/terms";
+import { hasAcceptedTerms, TERMS_VERSION, termsSeenMarker } from "@/lib/terms";
 import type { Database } from "@/server/db";
 import { acceptTerms, createConsentIntent, validConsentIntent } from "./terms-consent";
 
@@ -12,6 +12,11 @@ describe("terms consent", () => {
     expect(hasAcceptedTerms({ termsVersion: "old", termsAcceptedAt: now })).toBe(false);
     expect(hasAcceptedTerms({ termsVersion: TERMS_VERSION })).toBe(false);
     expect(hasAcceptedTerms({ termsVersion: TERMS_VERSION, termsAcceptedAt: now })).toBe(true);
+  });
+
+  it("scopes the seen-notice marker to one account and the current version", () => {
+    expect(termsSeenMarker("a")).toBe(`${TERMS_VERSION}:a`);
+    expect(termsSeenMarker("a")).not.toBe(termsSeenMarker("b"));
   });
 
   it("binds email consent to the normalized authenticated email and provider", () => {

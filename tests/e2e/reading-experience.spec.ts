@@ -3,68 +3,54 @@ import { buildTestEpub } from "@/server/content/fixtures";
 import { promoteToAdmin, signIn, uniqueEmail, uniqueTitle } from "./support";
 import postgres from "postgres";
 import { e2eDatabaseUrl } from "./env";
-import { consentUrl } from "@/lib/terms";
+import { POLICY_NOTICE_KEY, TERMS_VERSION } from "@/lib/terms";
 
-// This file exercises first-visit behavior, so readers start without any saved preferences.
-test.use({ storageState: { cookies: [], origins: [] } });
+// This file exercises first-visit reader behavior, so readers start without saved preferences.
+// The privacy notice is acknowledged so it does not cover the chapter end (terms.spec.ts covers it).
+test.use({
+  storageState: {
+    cookies: [],
+    origins: [
+      {
+        origin: `http://localhost:${process.env.E2E_PORT ?? 3100}`,
+        localStorage: [{ name: POLICY_NOTICE_KEY, value: TERMS_VERSION }],
+      },
+    ],
+  },
+});
 
 let work: { id: number; title: string };
 const CHAPTERS = 6;
 
-test("consent returns readers to their work, chapter, and search", async ({ page }) => {
-  const email = uniqueEmail("consent-return");
-  await signIn(page, email);
-  const sql = postgres(e2eDatabaseUrl(), { max: 1 });
-  try {
-    for (const destination of [
-      `/works/${work.id}`,
-      `/works/${work.id}/chapters/2`,
-      `/search?q=${encodeURIComponent(work.title)}`,
-    ]) {
-      await sql`update users set terms_version = null, terms_accepted_at = null where email = ${email}`;
-      await page.goto(destination);
-      await expect(page).toHaveURL(
-        new RegExp(
-          `/consent\\?callbackUrl=${encodeURIComponent(destination).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
-        ),
-      );
-      await expect(page.getByRole("heading", { name: "確認使用條款" })).toBeVisible();
-      await page.getByRole("button", { name: "繼續使用", exact: true }).click();
-      await expect
-        .poll(() => new URL(page.url()).pathname + new URL(page.url()).search)
-        .toBe(destination);
-      await expect(page.getByRole("heading", { name: "確認使用條款" })).toHaveCount(0);
-    }
-  } finally {
-    await sql.end();
-  }
-});
-
-test("continuous reading offers consent without discarding loaded text", async ({ page }) => {
-  const email = uniqueEmail("stream-consent");
+test("reading on while the terms notice is pending agrees and keeps loading", async ({ page }) => {
+  const email = uniqueEmail("stream-terms");
   await signIn(page, email);
   await openChapterAndChoose(page, "連續閱讀");
   const sql = postgres(e2eDatabaseUrl(), { max: 1 });
   try {
     await sql`update users set terms_version = null, terms_accepted_at = null where email = ${email}`;
-    const response = await page.request.get(`/api/v1/works/${work.id}/chapters/2`);
-    expect(response.status()).toBe(403);
-    expect(response.headers()["cache-control"]).toBe("no-store");
-    expect(await response.json()).toEqual({
-      status: "terms_required",
-      consentUrl: consentUrl(`/works/${work.id}/chapters/2`),
-    });
+    await page.reload();
+    const notice = page.getByRole("region", { name: "隱私與條款通知" });
+    await expect(notice).toBeVisible();
+    // Restoring the reading position is not input; the reader's own key press is agreement.
+    expect(
+      (await sql`select terms_version from users where email = ${email}`)[0]!.terms_version,
+    ).toBeNull();
     await readToTheEnd(page);
-    const prompt = page
-      .getByRole("note")
-      .filter({ has: page.getByRole("heading", { name: "確認使用條款" }) });
-    await expect(prompt).toBeVisible();
-    await expect(page.getByText("第 1 章的段落 60，連續閱讀測試內文。")).toBeVisible();
-    await prompt.getByRole("link", { name: "繼續使用" }).click();
-    await expect(page.getByRole("heading", { name: "確認使用條款" })).toBeVisible();
-    await page.getByRole("button", { name: "繼續使用", exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`/works/${work.id}/chapters/2$`));
-    await expect(page.getByText("第 2 章的段落 1，連續閱讀測試內文。")).toBeVisible();
+    await expect(notice).toHaveCount(0);
+    // The banner may hydrate before the reader; keep reading until the stream responds.
+    await expect(async () => {
+      await readToTheEnd(page);
+      await expect(page.getByText("第 2 章的段落 1，連續閱讀測試內文。")).toBeVisible({
+        timeout: 1000,
+      });
+    }).toPass();
+    await expect
+      .poll(
+        async () =>
+          (await sql`select terms_version from users where email = ${email}`)[0]!.terms_version,
+      )
+      .toBe(TERMS_VERSION);
   } finally {
     await sql.end();
   }

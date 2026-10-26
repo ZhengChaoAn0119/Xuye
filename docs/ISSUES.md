@@ -32,6 +32,7 @@ Statuses: `BACKLOG`, `READY`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 | UX-006   | Reader             | P2       | DONE    | Codex · 2026-10-05  | reader         | The floating reader toolbar overlaps body text at the bottom of the screen (2026-10-02 walkthrough).                                   | `reader-chrome.module.css`, reader padding                               |
 | UX-007   | Account            | P3       | DONE    | Codex · 2026-10-05  | account        | Admin accounts are labelled 「免費會員」 on `/account`; show the role or tier accurately.                                              | `account/page.tsx`, i18n                                                 |
 | UX-008   | Branding           | P3       | DONE    | Codex · 2026-10-05  | admin          | Admin logo mark is 「序」 while the site mark is 「續」; confirm whether intentional.                                                  | `admin/layout.tsx`, `site-header.tsx`                                    |
+| UX-009   | Legal              | P1       | DONE    | Claude · 2026-10-26 | legal          | Replace the sign-in checkbox and full-page consent with a bottom notice banner: visitor notice, account accept/decline, continued use. | `policy-banner*`, root layout, sign-in, guards, i18n, `terms.spec.ts`    |
 | FUNC-004 | Settings           | P2       | BACKLOG | —                   | settings       | 「關注的資訊」: update notifications and followed authors, as a settings section once the features exist.                              | settings, notifications (not built)                                      |
 | OPS-002  | Launch policy      | P0       | READY   | —                   | launch         | Replace test-version operator/contact, processor locations, and retention/backup placeholders before public launch.                    | i18n terms/privacy, hosting decisions                                    |
 
@@ -82,6 +83,12 @@ Statuses: `BACKLOG`, `READY`, `IN PROGRESS`, `BLOCKED`, `DONE`.
 ## Completed log
 
 Completed issues are moved here after checks and relevant desktop/mobile E2E pass.
+
+### UX-009 · Policy notice banner
+
+- Request (user, 2026-10-26): mainstream sites do not send readers to a full consent page; use a translucent bottom banner with accept/decline, treat no choice as acceptance, and keep the privacy policy in the footer.
+- Resolution: `src/components/policy-banner.tsx` in the root layout. Visitors get a notice with 「知道了」 only, because they receive strictly necessary cookies alone. Accounts without the current version get 「接受／拒絕」, and continued use records agreement; any input outside the banner (tap, wheel, swipe, key) counts as its default choice for both, and only pressing 「拒絕」 avoids agreement. Decline offers export and deletion, then signs out. `/consent`, `terms-choice`, and the `terms_required` responses were removed. See DECISIONS "Policy notice banner".
+- Verification: see `docs/handoffs/CURRENT.md` (2026-10-26).
 
 ### DOC-001 · Terms and account consent
 

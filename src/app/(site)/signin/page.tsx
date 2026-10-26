@@ -1,4 +1,5 @@
 import type { Metadata, Route } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { emailSignIn, googleSignIn } from "@/app/auth-actions";
@@ -8,8 +9,6 @@ import { authProviderAvailability } from "@/server/auth-providers";
 import { getCurrentUser } from "@/server/authz";
 import { serverEnv } from "@/env";
 import styles from "./signin.module.css";
-import { TermsChoice } from "@/components/terms-choice";
-import { consentUrl } from "@/lib/terms";
 
 export const metadata: Metadata = { title: t("auth.signInTitle"), robots: { index: false } };
 
@@ -19,7 +18,7 @@ async function SignInPanel({ searchParams }: Pick<PageProps<"/signin">, "searchP
     Array.isArray(params.callbackUrl) ? params.callbackUrl[0] : params.callbackUrl,
   );
   const user = await getCurrentUser();
-  if (user) redirect((user.termsAccepted ? callbackUrl : consentUrl(callbackUrl)) as Route);
+  if (user) redirect(callbackUrl as Route);
   const providers = authProviderAvailability(serverEnv());
 
   return (
@@ -27,11 +26,6 @@ async function SignInPanel({ searchParams }: Pick<PageProps<"/signin">, "searchP
       <p className={styles.eyebrow}>{t("auth.eyebrow")}</p>
       <h1 id="signin-title">{t("auth.signInTitle")}</h1>
       <p className={styles.intro}>{t("auth.signInIntro")}</p>
-      {params.consent === "declined" && (
-        <p className={styles.notice} role="alert">
-          {t("terms.declined")}
-        </p>
-      )}
       {(providers.email || providers.google) && (
         <form
           action={
@@ -47,7 +41,6 @@ async function SignInPanel({ searchParams }: Pick<PageProps<"/signin">, "searchP
               <input id="email" name="email" type="email" autoComplete="email" required />
             </>
           )}
-          <TermsChoice defaultAgreed={params.consent !== "declined"} />
           {providers.email && <button className={styles.primary}>{t("auth.sendLink")}</button>}
           {providers.google && (
             <>
@@ -61,6 +54,17 @@ async function SignInPanel({ searchParams }: Pick<PageProps<"/signin">, "searchP
               </button>
             </>
           )}
+          <p className={styles.terms}>
+            {t("terms.signInPrefix")}
+            <Link href="/terms" target="_blank" rel="noopener noreferrer">
+              {t("terms.title")}
+            </Link>
+            {t("terms.and")}
+            <Link href="/privacy" target="_blank" rel="noopener noreferrer">
+              {t("privacy.title")}
+            </Link>
+            {t("terms.signInSuffix")}
+          </p>
         </form>
       )}
       {!providers.email && !providers.google && (

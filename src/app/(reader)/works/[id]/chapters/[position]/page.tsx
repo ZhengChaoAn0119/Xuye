@@ -129,9 +129,7 @@ async function Reader({ params }: { params: Params }) {
   const found = await loadChapter(params);
   if (!found) notFound();
   const { work, entry } = found;
-  const { user, preferences } = await getRequestReader(
-    `/works/${work.id}/chapters/${entry.position}`,
-  );
+  const { user, preferences } = await getRequestReader();
   const allowed = contentAllowed(work, preferences);
   const accountState = user
     ? await getChapterAccountState(getDb(), user.id, entry.id, work.id)

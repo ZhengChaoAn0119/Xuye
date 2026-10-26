@@ -1,4 +1,5 @@
 import { defineConfig, devices } from "@playwright/test";
+import { POLICY_NOTICE_KEY, TERMS_VERSION } from "./src/lib/terms";
 import { e2eDatabaseUrl } from "./tests/e2e/env";
 
 const PORT = Number(process.env.E2E_PORT ?? 3100);
@@ -20,14 +21,17 @@ export default defineConfig({
   use: {
     baseURL,
     trace: "retain-on-failure",
-    // Readers who already picked paged reading, so the first-visit reading-mode prompt does not
-    // cover other flows; reading-experience.spec.ts clears this to exercise the prompt itself.
+    // Readers who already picked paged reading and acknowledged the privacy notice, so first-visit
+    // prompts do not cover other flows; reading-experience.spec.ts and terms.spec.ts reset them.
     storageState: {
       cookies: [],
       origins: [
         {
           origin: baseURL,
-          localStorage: [{ name: "xuye:reader", value: JSON.stringify({ readingMode: "paged" }) }],
+          localStorage: [
+            { name: "xuye:reader", value: JSON.stringify({ readingMode: "paged" }) },
+            { name: POLICY_NOTICE_KEY, value: TERMS_VERSION },
+          ],
         },
       ],
     },

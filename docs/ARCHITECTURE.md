@@ -180,7 +180,7 @@ RateLimitWindow scope, key, windowStart, windowEnd, requests   PostgreSQL 短時
 
 ## 9. 待確認事項
 
-- 正式環境的寄信服務：建議 Resend（起步）或 Amazon SES（若主機選 AWS），使用專屬子網域並設定 SPF／DKIM／DMARC，等使用者確認。
+- 正式環境的寄信服務：上線時只開 Google 登入，不設定寄信服務（2026-10-26 決定，見 DECISIONS「Launch sign-in」）。之後要加回 Email 登入時建議 Resend（起步）或 Amazon SES（若主機選 AWS），使用專屬子網域並設定 SPF／DKIM／DMARC，等使用者確認。
 - 封面上傳（之後）：S3 相容物件儲存（GCS／S3／R2，開發用 MinIO），等主機決定後再選。目前一律使用自動產生的文字封面。
 - Apple 登入與 App：延後到正式版上線後（已決定）。
 - 錯誤監控與流量分析工具：要符合「不追蹤」原則。
