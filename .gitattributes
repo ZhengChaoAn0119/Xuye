@@ -3,3 +3,5 @@
 *.ico binary
 *.jpg binary
 *.webp binary
+# cmd.exe expects Windows line endings in batch files
+*.bat text eol=crlf
