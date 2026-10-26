@@ -45,6 +45,7 @@ In the managed Codex Windows sandbox, dot-source `. .\scripts\enable-codex-shell
 | `pnpm user:promote <email>` | Make an existing account (sign in once first) an admin for `/admin`. |
 | `pnpm build` then `pnpm start` | Production standalone server, the same artifact as the Docker image. Needs `AUTH_URL`. |
 | `docker compose up --build` | Full stack: db, mailpit, migrate, app on :3000. |
+| `startserver.bat` / `closeserver.bat` / `restartserver.bat` | Self-hosted production (`docker-compose.prod.yml`, project `xuye-prod`) through `scripts/server.ps1`. Start creates `.env.production` with random secrets on first run, starts Docker Desktop, checks GitHub CI for the checked-out commit (asks before starting when it has not passed; `-SkipCi` skips the question), builds, and waits for `/api/v1/health` on `127.0.0.1:3080`. The tunnel runs when `CLOUDFLARE_TUNNEL_TOKEN` is set. Close never removes the database volume. |
 
 Conventions:
 

@@ -2,6 +2,36 @@
 
 Updated: 2026-10-26 (Asia/Taipei)
 
+## Resume here (end of the 2026-10-26 Claude session)
+
+- `main` contains everything from this session (Google-only sign-in decision, policy notice banner, self-hosting scripts) and is pushed to GitHub. CI for `44c383a` passed; check the run for the final commit when resuming.
+- State on this machine (`E:\project\xuye`):
+  - `.env` has the Google OAuth credentials.
+  - `.env.production` holds the generated production secrets. It is not in Git; another host gets new secrets from `startserver.bat`.
+  - The `xuye-prod` stack may still be running, at `127.0.0.1:3080`. Its database is empty.
+  - The development stack (`xuye` db and Mailpit) is the one used by `pnpm dev`.
+- Next steps, in order:
+  1. **Cloudflare Tunnel.** In Zero Trust, go to Networks → Tunnels and create a tunnel. Add the public hostname `xuye.chaoanstudio.com` → `http://app:3000`. Paste the token into `CLOUDFLARE_TUNNEL_TOKEN` in `.env.production`, run `restartserver.bat`, and confirm the public URL loads. Then test Google sign-in on the real domain.
+  2. **Launch content and admin.** Ask the user whether to copy the development database or re-import EPUBs, and which Gmail becomes the admin (`pnpm user:promote` with `DATABASE_URL` pointed at the production database).
+  3. **SEO for the domain.** Add `metadataBase`, canonical URLs, and a sitemap.
+  4. **OPS-002.** Get the operator's legal name, the contact (`xuye@chaoanstudio.com`), processors and locations, and retention periods, and replace the placeholders in the policy text.
+  5. **At launch.** Click "Publish app" in Google Auth Platform → Audience; the client is currently in Testing mode with only the operator as a test user.
+- Deferred by user direction: a mail provider (email login), Windows Update hardening, and backups. All wait until the site moves to another host. FUNC-004 remains in the backlog.
+- Guide the user step by step in Traditional Chinese. Ask for screenshots of external dashboards. Never ask the user to paste secrets (tokens or client secrets) into chat.
+
+## Self-hosted production scripts (2026-10-26, Claude) — committed on `main`
+
+- User direction: this machine is a test host (MSI desktop: 32 GB RAM, 16 cores, no UPS). Downtime is acceptable; Windows Update hardening and backups wait until the move to another host.
+- Added `docker-compose.prod.yml` (project `xuye-prod`). Services: db with no published port and its own volume; migrate; app with a health check, published only on `127.0.0.1:3080`; and `cloudflared` behind the `tunnel` profile. `AUTH_URL=https://xuye.chaoanstudio.com`. Google sign-in only; no email variables are passed.
+- Added `scripts/server.ps1` (UTF-8 with BOM for Windows PowerShell 5.1) and three root wrappers: `startserver.bat`, `closeserver.bat`, `restartserver.bat`. Start does the following:
+  - Creates `.env.production` (git-ignored) from `.env.production.example` with random database, auth, and visitor secrets, and copies the Google credentials from `.env`.
+  - Starts Docker Desktop if needed.
+  - Checks GitHub Actions for HEAD through the public API, warns about uncommitted changes and new commits on GitHub, and asks before starting unless CI passed.
+  - Builds, runs `up -d`, and waits for `/api/v1/health`; with a tunnel token, it also checks that the tunnel registered.
+    Close runs `down` and never removes the volume.
+- Verified on this machine: the first start built and passed the health check; restart (close + start) worked; the CI check reported `44c383a` as passed. `.env.production` exists here; `CLOUDFLARE_TUNNEL_TOKEN` is still empty.
+- The production database is empty, with no works and no admin. Next: create the Cloudflare tunnel (public hostname `xuye.chaoanstudio.com` → `http://app:3000`) and paste the token into `.env.production`. Then decide the launch content (copy the development database or import EPUBs) and which Gmail becomes admin (`pnpm user:promote` against the production database).
+
 ## Policy notice banner (2026-10-26, Claude) — `feat/consent-banner`, fast-forwarded into `main` and pushed
 
 - UX-009 at the user's request: replaced the sign-in checkbox and the full-page `/consent` route with a translucent bottom banner (`src/components/policy-banner.tsx` + `.module.css`, mounted in `src/app/layout.tsx`). Visitors see the privacy notice once per policy version with only 「知道了」. Accounts without the current terms see 「接受／拒絕」. Anything short of pressing 「拒絕」 is agreement and closes the banner: any input outside it (`pointerdown`, `wheel`, `touchmove`, or `keydown` except Tab and modifier keys, captured in a layout effect), another page, or a later visit. `/terms`, `/privacy`, and anything after pressing 「拒絕」 do not count. The same input closes the visitor notice as 「知道了」. The banner renders only on the client, so it is never visible before its listeners exist. `acceptTermsAction` does not call `refresh()`: a refresh re-rendered the reader mid-scroll and dropped the next-chapter load. The banner closes itself instead. Decline offers export and deletion, then signs out. Full rule: DECISIONS "Policy notice banner".
